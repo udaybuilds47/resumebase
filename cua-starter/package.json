@@ -1,0 +1,31 @@
+{
+	"scripts": {
+	  "dev:web": "pnpm -C apps/web dev",
+	  "dev:api": "tsx apps/api/src/index.ts",
+	  "dev:local": "SH_ENV=LOCAL pnpm dev:api",
+	  "dev:bb": "SH_ENV=BROWSERBASE pnpm dev:api",
+	  "dev:desktop": "concurrently -k \"pnpm -C apps/web dev\" \"pnpm -C desktop/electron dev\"",
+	  "build:desktop": "pnpm -C desktop/electron build",
+	  "start:desktop": "pnpm -C desktop/electron start"
+	},
+	"dependencies": {
+	  "@anthropic-ai/sdk": "^0.59.0",
+	  "@browserbasehq/stagehand": "^2.4.2",
+	  "cors": "^2.8.5",
+	  "dotenv": "^17.2.1",
+	  "express": "^5.1.0",
+	  "next": "15.4.6",
+	  "react": "19.1.0",
+	  "react-dom": "19.1.0",
+	  "ws": "^8.18.3",
+	  "zod": "^4.0.17"
+	},
+	"devDependencies": {
+	  "@types/express": "^5.0.3",
+	  "@types/node": "^24.2.1",
+	  "playwright": "^1.54.2",
+	  "tsx": "^4.20.3",
+	  "typescript": "^5.9.2",
+	  "concurrently": "^8.2.2"
+	}
+  }
