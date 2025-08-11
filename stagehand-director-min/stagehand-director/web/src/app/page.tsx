@@ -1,6 +1,9 @@
 // app/page.tsx (or wherever your page lives)
 "use client";
 import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type RunStart = { runId: string; sessionId: string; viewerUrl: string | null };
 
@@ -39,59 +42,70 @@ export default function Home() {
   };
 
   return (
-    <main style={{ maxWidth: 1100, margin: "40px auto", padding: 16, fontFamily: "ui-sans-serif, system-ui" }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>
-        Director-style Agent (Stagehand × Browserbase) — Live
-      </h1>
-
-      <div style={{ display: "flex", gap: 8 }}>
-        <input
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          style={{ flex: 1, padding: 12, border: "1px solid #ddd", borderRadius: 8 }}
-          placeholder="Describe the task…"
-        />
-        <button
-          onClick={start}
-          disabled={loading}
-          style={{ padding: "12px 16px", borderRadius: 8, border: "1px solid #000", background: "#000", color: "#fff" }}
-        >
-          {loading ? "Starting…" : "Run"}
-        </button>
-      </div>
-
-      {err && <p style={{ color: "crimson", marginTop: 12 }}>{err}</p>}
-
-      {run && (
-        <div style={{ marginTop: 16, border: "1px solid #eee", borderRadius: 8, padding: 12 }}>
-          <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
-            <div><b>Session:</b> {run.sessionId ?? "—"}</div>
-            {run.viewerUrl && (
-              <a href={run.viewerUrl} target="_blank" rel="noreferrer" style={{ color: "#2563eb" }}>
-                Open in new tab ↗
-              </a>
-            )}
+    <main className="h-screen max-w-6xl mx-auto p-3 flex flex-col overflow-hidden">
+      <Card className="flex-shrink-0 mb-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-bold">
+            Director-style Agent (Stagehand × Browserbase) — Live
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="flex gap-2 mb-2">
+            <Input
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Describe the task…"
+              className="flex-1"
+            />
+            <Button
+              onClick={start}
+              disabled={loading}
+              className="whitespace-nowrap"
+            >
+              {loading ? "Starting…" : "Run"}
+            </Button>
           </div>
 
-          {run.viewerUrl ? (
-            <iframe
-              key={run.runId} // ensure reload per run
-              src={run.viewerUrl}
-              style={{
-                width: "100%",
-                height: "76vh",
-                border: "1px solid #e5e7eb",
-                borderRadius: 8,
-                background: "#000",
-              }}
-              // Browserbase debugger works with these; loosen if needed
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              allow="clipboard-read; clipboard-write; fullscreen"
-            />
-          ) : (
-            <p>No viewer URL returned.</p>
+          {err && (
+            <p className="text-destructive text-sm mb-2">
+              {err}
+            </p>
           )}
-        </div>
+        </CardContent>
+      </Card>
+
+      {run && (
+        <Card className="flex-1 flex flex-col overflow-hidden">
+          <CardHeader className="pb-3 flex-shrink-0">
+            <div className="flex gap-3 items-center flex-wrap text-sm">
+              <div><b>Session:</b> {run.sessionId ?? "—"}</div>
+              {run.viewerUrl && (
+                <a 
+                  href={run.viewerUrl} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-blue-600 hover:underline"
+                >
+                  Open in new tab ↗
+                </a>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0 flex-1 flex flex-col overflow-hidden">
+            {run.viewerUrl ? (
+              <iframe
+                key={run.runId} // ensure reload per run
+                src={run.viewerUrl}
+                className="w-full flex-1 border border-gray-200 rounded-lg bg-black min-h-0"
+                // Browserbase debugger works with these; loosen if needed
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                allow="clipboard-read; clipboard-write; fullscreen"
+              />
+            ) : (
+              <p>No viewer URL returned.</p>
+            )}
+          </CardContent>
+        </Card>
       )}
     </main>
   );
