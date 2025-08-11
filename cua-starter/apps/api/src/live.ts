@@ -27,9 +27,9 @@ export async function startCDPScreencast(page: Page, runId: string) {
   try {
     console.log("Starting high-quality screenshot streaming...");
     
-    // Ensure consistent viewport for quality
-    await page.setViewportSize({ width: 1280, height: 800 });
-    console.log("Viewport set to 1280x800");
+    // Don't resize viewport - preserve existing dimensions for webview
+    // This keeps the agent running in the same webview size
+    console.log("Preserving existing viewport size for webview");
     
     let stopped = false;
     const fps = 10; // Higher FPS for smooth streaming
@@ -40,13 +40,17 @@ export async function startCDPScreencast(page: Page, runId: string) {
       
       try {
         // High-quality screenshot with specific options
+        // Use current viewport size instead of hardcoded dimensions
+        const viewport = await page.viewportSize();
+        const clip = viewport ? { x: 0, y: 0, width: viewport.width, height: viewport.height } : undefined;
+        
         const buf = await page.screenshot({
           type: "jpeg",
           quality: 100,        // 👈 maximum JPEG quality
           fullPage: false,
           omitBackground: false,
           timeout: 5000,
-          clip: { x: 0, y: 0, width: 1280, height: 800 } // 👈 explicit clip for quality
+          clip: clip // 👈 use current viewport size
         });
         
         
@@ -81,8 +85,8 @@ export async function startCDPScreencast(page: Page, runId: string) {
 
 // Fallback screencast for non-Chromium browsers
 export async function startScreencast(page: Page, runId: string, fps = 4) {
-  // Ensure consistent viewport for quality
-  await page.setViewportSize({ width: 1280, height: 800 });
+  // Don't resize viewport - preserve existing dimensions for webview
+  // This keeps the agent running in the same webview size
   
   let stopped = false;
   const interval = Math.max(1000 / fps, 100); // Higher FPS, lower minimum interval

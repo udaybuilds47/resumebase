@@ -6,8 +6,9 @@ import "dotenv/config";
 
 import { randomUUID } from "crypto";
 import { createStagehand } from "../../../packages/agent/src/stagehandClient";
-import { attachWS, broadcast, startCDPScreencast, startScreencast } from "./live";
+import { attachWS, broadcast, startScreencast } from "./live";  // 👈 Import startScreencast
 import { planEpisodes } from "./planner";
+import { launchAgentBrowser, getWebviewPage } from "./cdp";  // 👈 Import both functions
 
 const app = express();
 app.use(express.json());
@@ -26,6 +27,8 @@ app.post("/run", async (req, res) => {
     keepOpen = false,
     live = true,
     allowlist = [] as string[],
+    backgroundMode = false,  // 👈 New flag for background agent mode
+    useExistingWebview = false,  // 👈 New flag to use existing webview
   } = req.body ?? {};
 
   const runId = randomUUID();
@@ -33,35 +36,58 @@ app.post("/run", async (req, res) => {
 
   // kick off the run in the background
   (async () => {
-    const sh = createStagehand();
-    await sh.init();
-    await sh.page.setViewportSize({ width: 1920, height: 1080 }); // or 1600x900
-
+    let browser: any, context: any, page: any;
+    
+    // 👈 Always use separate browser for reliability
+    // The screencast will make it appear as if the agent is running in the webview
+    console.log('Launching separate browser instance for agent...');
+    const result = await launchAgentBrowser();
+    browser = result.browser;
+    context = result.context;
+    page = result.page;
+    console.log('Launched separate browser instance for agent');
+    
+    // 👈 No need to check URL since this is a completely separate browser
+    
+    if (url) { 
+      await page.goto(url, { waitUntil: "domcontentloaded" }); 
+      broadcast(runId, { type: "nav", url }); 
+    }
+    
+    // 👈 Viewport constraints are already applied in launchAgentBrowser
+    // No need for additional checks or constraints here
+    
+    // Create Stagehand with attached page
+    const sh = createStagehand({ attachPage: page });
+    await sh.init(); // This will do nothing when we have an attached page
+    
+    // 👈 Always start screencast to show agent actions in the webview area
+    console.log("Starting screencast - agent actions will be visible in webview");
+    startScreencast(page, runId);
+    
+    // 👈 Add navigation and console event listeners for real-time updates
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) {
+        broadcast(runId, { 
+          type: "agent.navigation", 
+          url: frame.url(),
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+    
+    // Show console messages from the agent's actions
+    page.on("console", (msg) => {
+      broadcast(runId, { 
+        type: "agent.console", 
+        level: msg.type(),
+        text: msg.text(),
+        timestamp: new Date().toISOString()
+      });
+    });
 
     try {
-      if (url) {
-        await sh.page.goto(url, { waitUntil: "domcontentloaded" });
-        broadcast(runId, { type: "nav", url });
-      }
-
-      // start stream
-      let stopCast: undefined | (() => Promise<void>);
-      if ((process.env.SH_ENV ?? "LOCAL") === "LOCAL" && live) {
-        try {
-          stopCast = await startCDPScreencast(sh.page, runId);
-          console.log("CDP started");
-        } catch (e) {
-          console.log(e);
-          // fallback if CDP not available
-          const stopFn = await startScreencast(sh.page, runId, 2);
-          stopCast = async () => { await stopFn(); };
-        }
-        broadcast(runId, { type: "session.started", env: "LOCAL", runId });
-        try {
-          const buf = await sh.page.screenshot({ type: "jpeg", quality: 60 });
-          broadcast(runId, { type: "frame", jpeg: buf.toString("base64") });
-        } catch {}
-      }
+      broadcast(runId, { type: "session.started", env: "LOCAL", runId });
 
       // decide episodes (planner if goal provided)
       type Ep = { task: string; maxSteps?: number };
@@ -144,10 +170,24 @@ app.post("/run", async (req, res) => {
         allActions.push(...actions);
         summaries.push(summary);
 
+        // 👈 Always broadcast actions for real-time updates in sidebar
+        actions.forEach((action, actionIdx) => {
+          const actionEvent = {
+            type: "agent.action",
+            episode: idx,
+            actionIndex: actionIdx,
+            action: action.type || "unknown",
+            details: action.description || action.text || "Action performed",
+            timestamp: new Date().toISOString()
+          };
+          broadcast(runId, actionEvent);
+        });
+
         broadcast(runId, { type: "episode.finish", idx, summary, actionsCount: actions.length });
         return /^BLOCKED:/i.test(summary);
       }
 
+      // 👈 Execute all episodes
       for (let i = 0; i < epList.length; i++) {
         const blocked = await runEpisode(epList[i], i);
         await sleep(350);
@@ -156,14 +196,25 @@ app.post("/run", async (req, res) => {
 
       broadcast(runId, { type: "session.finished", ok: true });
 
-      if (!keepOpen) { try { await sh.close(); } catch {} }
-      if (stopCast)   { try { await stopCast(); } catch {} }
+      if (!keepOpen) { 
+        try { 
+          await sh.close(); 
+          // 👈 Always close browser/context since we always create them
+          await context.close();
+          await browser.close();
+        } catch {} 
+      }
 
       // Optional: persist summaries/actions somewhere here
 
     } catch (outerErr) {
       broadcast(runId, { type: "error", message: String((outerErr as any)?.message || outerErr) });
-      try { await sh.close(); } catch {}
+      try { 
+        await sh.close(); 
+        // 👈 Always close browser/context since we always create them
+        await context.close();
+        await browser.close();
+      } catch {}
     }
   })();
 

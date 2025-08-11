@@ -7,7 +7,8 @@
     "main": "dist/main.js",
     "type": "commonjs",
     "scripts": {
-      "dev": "electron --require ts-node/register src/main.ts",
+      "dev": "tsc -p . && electron dist/main.js",
+      "dev:watch": "tsc -p . --watch & electron dist/main.js",
       "prebuild": "rm -rf dist && mkdir -p dist && cp src/preload.cjs dist/",
       "build": "tsc -p . && electron-builder -m",
       "start": "electron ./dist/main.js"

@@ -1,34 +1,68 @@
 import { Stagehand } from "@browserbasehq/stagehand";
+import type { Page } from "playwright";
 
-export function createStagehand() {
+let attachedPage: Page | null = null;
+
+export function createStagehand(opts?: { attachPage?: Page }) {
+  attachedPage = opts?.attachPage ?? null;
+
   const env = (process.env.SH_ENV ?? "LOCAL") as "LOCAL" | "BROWSERBASE";
 
+  // If we have an attached page, create a minimal Stagehand instance
+  // that won't try to launch its own browser
+  if (attachedPage) {
+    const sh = new Stagehand({
+      env,
+      modelName: "anthropic/claude-sonnet-4-20250514",
+      modelClientOptions: {
+        apiKey: process.env.ANTHROPIC_API_KEY!,
+      },
+      // Don't provide any browser launch options to prevent Stagehand from trying to launch
+      // We'll handle the page operations directly
+    });
+
+    // Override the page getter to return our attached page
+    Object.defineProperty(sh, 'page', {
+      get: () => attachedPage,
+      configurable: true
+    });
+
+    // Override init to do nothing since we already have a page
+    const originalInit = sh.init.bind(sh);
+    sh.init = async () => {
+      // Do nothing - we already have our page
+      return {} as any; // Return empty InitResult to satisfy TypeScript
+    };
+
+    // Override close to do nothing since we don't own the page
+    const originalClose = sh.close.bind(sh);
+    sh.close = async () => {
+      // Do nothing - we don't own the page
+      return;
+    };
+
+    return sh;
+  }
+
+  // Original behavior for when we need to launch our own browser
   return new Stagehand({
     env,
-    // LLM: Anthropic Claude Sonnet 4
-    // Stagehand accepts "provider/model" format.
-    // You can also use "anthropic/claude-3-7-sonnet-latest".
     modelName: "anthropic/claude-sonnet-4-20250514",
     modelClientOptions: {
       apiKey: process.env.ANTHROPIC_API_KEY!,
     },
-
-    // Remote (Browserbase) setup
     apiKey: process.env.BROWSERBASE_API_KEY,
     projectId: process.env.BROWSERBASE_PROJECT_ID,
     browserbaseSessionCreateParams: {
       projectId: process.env.BROWSERBASE_PROJECT_ID!,
       browserSettings: {
         blockAds: true,
-        // CUA returns XY clicks – pin your viewport
         viewport: { width: 1280, height: 800 },
       },
     },
-
-    // Local Playwright fallback
     localBrowserLaunchOptions: {
-      headless: false,                  // 👈 switch to true
-      viewport: { width: 1280, height: 800 }, // 👈 standard viewport for AI agent
+      headless: false,
+      viewport: { width: 1280, height: 800 },
     },
   });
 }

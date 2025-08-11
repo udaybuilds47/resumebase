@@ -1,38 +1,50 @@
-import { app, BrowserWindow, BrowserView, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import * as path from "path";
 app.commandLine.appendSwitch("remote-debugging-port", "9222");
 
 let win: BrowserWindow;
-let view: BrowserView;
-
-function layout() {
-  const [w, h] = win.getContentSize();
-  view.setBounds({ x: 420, y: 56, width: w - 420 - 16, height: h - 56 - 16 });
-}
 
 app.whenReady().then(async () => {
   win = new BrowserWindow({
-    width: 1440,
-    height: 900,
+    width: 1280,
+    height: 720,
+    alwaysOnTop: false,
+    skipTaskbar: false,
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
+    closable: true,
+    focusable: true,
+    show: false,
+    autoHideMenuBar: false,
+    transparent: false,
+    frame: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      devTools: true,
+      webviewTag: true,
+      webSecurity: true,
+      allowRunningInsecureContent: true,
+      experimentalFeatures: true
     }
   });
 
   await win.loadURL(process.env.UI_URL ?? "http://localhost:3000");
 
-  view = new BrowserView({ webPreferences: { contextIsolation: true } });
-  win.setBrowserView(view);
-  layout();
-  win.on("resize", layout);
-
-  await view.webContents.loadURL("about:blank");
+  // Show window after everything is set up
+  win.show();
+  
+  // Ensure normal window behavior
+  win.setAlwaysOnTop(false);
+  win.setVisibleOnAllWorkspaces(false);
+  
+  // Force normal window level on macOS
+  if (process.platform === 'darwin') {
+    win.setWindowButtonVisibility(true);
+  }
 });
 
-ipcMain.handle("cua:nav", async (_e, rawUrl: string) => {
-  let url = rawUrl;
-  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-  await view.webContents.loadURL(url);
-});
+// Modern approach: WebContentsView will be embedded in the renderer process
+// Navigation will be handled by the web app itself

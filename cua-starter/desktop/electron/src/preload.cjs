@@ -1,4 +1,5 @@
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge } = require("electron");
 contextBridge.exposeInMainWorld("cua", {
-  nav: (url) => ipcRenderer.invoke("cua:nav", url)
+  // Modern approach: WebContentsView will be embedded in the renderer
+  // No need for IPC navigation
 });
