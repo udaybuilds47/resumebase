@@ -132,10 +132,12 @@ export default function SessionReplay({ sessionId, serverUrl, isFetching }: Sess
         // Clear any existing content
         container.innerHTML = '';
         
-        // Set up container styles for proper containment
+        // Set up container styles for proper containment and centering
         container.style.position = "relative";
         container.style.overflow = "hidden";
-        container.style.display = "block";
+        container.style.display = "flex";
+        container.style.alignItems = "center";
+        container.style.justifyContent = "center";
         container.style.boxSizing = "border-box";
         container.style.width = "100%";
         container.style.height = "100%";
@@ -146,9 +148,19 @@ export default function SessionReplay({ sessionId, serverUrl, isFetching }: Sess
         
         console.log('Container dimensions:', { containerWidth, containerHeight });
 
+        // Create a scaling wrapper div
+        const scalingWrapper = document.createElement('div');
+        scalingWrapper.style.transformOrigin = 'center center';
+        scalingWrapper.style.display = 'flex';
+        scalingWrapper.style.alignItems = 'center';
+        scalingWrapper.style.justifyContent = 'center';
+        scalingWrapper.style.width = '100%';
+        scalingWrapper.style.height = '100%';
+        container.appendChild(scalingWrapper);
+
         // Create player with constrained sizing - KEY FIXES:
         const p = new rrwebPlayer({
-          target: container,
+          target: scalingWrapper,
           props: {
             events: recording.events,
             // Don't set width/height - let it be responsive
@@ -158,8 +170,8 @@ export default function SessionReplay({ sessionId, serverUrl, isFetching }: Sess
             autoPlay: false,
             // Add these props to help with sizing
             insertStyleRules: [
-              // Force the player to respect container bounds
-              '.rr-player { max-width: 100% !important; max-height: 100% !important; }',
+              // Force the player to respect container bounds and center
+              '.rr-player { max-width: 100% !important; max-height: 100% !important; margin: 0 auto !important; }',
               '.rr-player .rr-player__frame { max-width: 100% !important; max-height: 100% !important; }',
               // Ensure controller doesn't overflow
               '.rr-controller { max-width: 100% !important; }',
@@ -169,37 +181,60 @@ export default function SessionReplay({ sessionId, serverUrl, isFetching }: Sess
         
         playerRef.current = p;
 
-                 // Apply size constraints after player is created
-         const applyConstraints = () => {
-           // Safety check - ensure player still exists
-           if (!playerRef.current || playerRef.current.destroyed) {
-             return;
-           }
-           
-           const playerElement = container.querySelector(".rr-player") as HTMLElement;
-           const frameElement = container.querySelector(".rr-player__frame") as HTMLElement;
-           
-           if (playerElement) {
-             playerElement.style.maxWidth = "100%";
-             playerElement.style.maxHeight = "100%";
-             playerElement.style.overflow = "hidden";
-           }
-           
-           if (frameElement) {
-             frameElement.style.maxWidth = "100%";
-             frameElement.style.maxHeight = "100%";
-             frameElement.style.overflow = "hidden";
-           }
-           
-           // Trigger resize to recalculate
-           if (playerRef.current?.triggerResize) {
-             try {
-               playerRef.current.triggerResize();
-             } catch (e) {
-               console.warn("Error triggering resize:", e);
-             }
-           }
-         };
+        // Apply size constraints after player is created
+        const applyConstraints = () => {
+          // Safety check - ensure player still exists
+          if (!playerRef.current || playerRef.current.destroyed) {
+            return;
+          }
+          
+          const playerElement = scalingWrapper.querySelector(".rr-player") as HTMLElement;
+          const frameElement = scalingWrapper.querySelector(".rr-player__frame") as HTMLElement;
+          
+          if (playerElement) {
+            // Get the natural dimensions of the recording
+            const playerWidth = playerElement.scrollWidth;
+            const playerHeight = playerElement.scrollHeight;
+            
+            // Calculate scale factor to fit in container
+            const scaleX = containerWidth / playerWidth;
+            const scaleY = containerHeight / playerHeight;
+            const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+            
+            console.log('Scaling calculation:', { 
+              playerWidth, 
+              playerHeight, 
+              containerWidth, 
+              containerHeight, 
+              scaleX, 
+              scaleY, 
+              finalScale: scale 
+            });
+            
+            // Apply the scale transform
+            scalingWrapper.style.transform = `scale(${scale})`;
+            
+            playerElement.style.maxWidth = "100%";
+            playerElement.style.maxHeight = "100%";
+            playerElement.style.margin = "0 auto";
+            playerElement.style.overflow = "hidden";
+          }
+          
+          if (frameElement) {
+            frameElement.style.maxWidth = "100%";
+            frameElement.style.maxHeight = "100%";
+            frameElement.style.overflow = "hidden";
+          }
+          
+          // Trigger resize to recalculate
+          if (playerRef.current?.triggerResize) {
+            try {
+              playerRef.current.triggerResize();
+            } catch (e) {
+              console.warn("Error triggering resize:", e);
+            }
+          }
+        };
 
         // Apply constraints after a brief delay to ensure DOM is ready
         setTimeout(applyConstraints, 100);
@@ -209,10 +244,27 @@ export default function SessionReplay({ sessionId, serverUrl, isFetching }: Sess
           // Check if player still exists before applying constraints
           if (playerRef.current && !playerRef.current.destroyed) {
             requestAnimationFrame(() => {
+              // Recalculate container dimensions
+              const newContainerWidth = container.clientWidth;
+              const newContainerHeight = container.clientHeight;
+              
+              // Recalculate scale if dimensions changed
+              const playerElement = scalingWrapper.querySelector(".rr-player") as HTMLElement;
+              if (playerElement) {
+                const playerWidth = playerElement.scrollWidth;
+                const playerHeight = playerElement.scrollHeight;
+                
+                const scaleX = newContainerWidth / playerWidth;
+                const scaleY = newContainerHeight / playerHeight;
+                const scale = Math.min(scaleX, scaleY, 1);
+                
+                scalingWrapper.style.transform = `scale(${scale})`;
+              }
+              
               applyConstraints();
               console.log('ResizeObserver triggered, container size:', {
-                width: container.clientWidth,
-                height: container.clientHeight
+                width: newContainerWidth,
+                height: newContainerHeight
               });
             });
           }
