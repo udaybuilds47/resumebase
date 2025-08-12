@@ -42,10 +42,10 @@ export default function Home() {
   };
 
   return (
-    <main className="h-screen max-w-6xl mx-auto p-3 flex flex-col overflow-hidden">
-      <Card className="flex-shrink-0 mb-2">
+    <main className={`h-screen max-w-6xl mx-auto p-3 flex flex-col overflow-hidden ${!run ? 'justify-center items-center' : ''}`}>
+      <Card className={`transition-all duration-500 ease-in-out ${!run ? 'w-full max-w-2xl' : 'flex-shrink-0 mb-2'}`}>
         <CardHeader className="pb-3">
-          <CardTitle className="text-3xl font-normal font-spectra">
+          <CardTitle className="text-3xl font-normal font-serif">
             resumebase
           </CardTitle>
         </CardHeader>
@@ -55,19 +55,19 @@ export default function Home() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe the task…"
-              className="flex-1"
+              className="flex-1 font-sans"
             />
             <Button
               onClick={start}
               disabled={loading}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap font-sans"
             >
               {loading ? "Starting…" : "Run"}
             </Button>
           </div>
 
           {err && (
-            <p className="text-destructive text-sm mb-2">
+            <p className="font-sans text-sm mb-2 text-destructive">
               {err}
             </p>
           )}
@@ -75,16 +75,16 @@ export default function Home() {
       </Card>
 
       {run && (
-        <Card className="flex-1 flex flex-col overflow-hidden">
+        <Card className="flex-1 flex flex-col overflow-hidden animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
           <CardHeader className="pb-3 flex-shrink-0">
             <div className="flex gap-3 items-center flex-wrap text-sm">
-              <div><b>Session:</b> {run.sessionId ?? "—"}</div>
+              <div className="font-serif"><b>Session:</b> <span className="font-sans">{run.sessionId ?? "—"}</span></div>
               {run.viewerUrl && (
                 <a 
                   href={run.viewerUrl} 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 hover:underline font-sans"
                 >
                   Open in new tab ↗
                 </a>
@@ -102,7 +102,7 @@ export default function Home() {
                 allow="clipboard-read; clipboard-write; fullscreen"
               />
             ) : (
-              <p>No viewer URL returned.</p>
+              <p className="font-sans">No viewer URL returned.</p>
             )}
           </CardContent>
         </Card>

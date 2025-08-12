@@ -8,8 +8,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        'pressura': ['GT Pressura Extended', 'sans-serif'],
-        'spectra': ['GT Spectra Book', 'serif'],
+        'sans': ['Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+        'serif': ['Cormorant Garamond', 'serif'],
       },
       colors: {
         border: "#e5e7eb",
