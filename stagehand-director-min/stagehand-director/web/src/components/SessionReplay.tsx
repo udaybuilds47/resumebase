@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 interface SessionReplayProps {
   sessionId: string;
   serverUrl: string;
+  isFetching?: boolean;
 }
 
 interface RecordingData {
@@ -12,7 +13,7 @@ interface RecordingData {
   sessionId: string;
 }
 
-export default function SessionReplay({ sessionId, serverUrl }: SessionReplayProps) {
+export default function SessionReplay({ sessionId, serverUrl, isFetching }: SessionReplayProps) {
   const [recording, setRecording] = useState<RecordingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +46,10 @@ export default function SessionReplay({ sessionId, serverUrl }: SessionReplayPro
         if (!data.events || data.events.length === 0) {
           console.log(`Recording empty (attempt ${retryCount + 1}/5), will retry...`);
           if (retryCount >= 4) {
-            throw new Error("Recording failed to process after multiple attempts");
+            // Don't throw error, just set a user-friendly message
+            setError("Recording is still processing. Please wait a moment and try again.");
+            setLoading(false);
+            return;
           }
           setTimeout(() => {
             setRetryCount(prev => prev + 1);
@@ -56,7 +60,10 @@ export default function SessionReplay({ sessionId, serverUrl }: SessionReplayPro
         if (data.events.length < 2) {
           console.log(`Recording has insufficient events: ${data.events.length} (attempt ${retryCount + 1}/5), will retry...`);
           if (retryCount >= 4) {
-            throw new Error("Recording failed to process after multiple attempts");
+            // Don't throw error, just set a user-friendly message
+            setError("Recording needs more events to play. Please wait a moment and try again.");
+            setLoading(false);
+            return;
           }
           setTimeout(() => {
             setRetryCount(prev => prev + 1);
@@ -66,14 +73,20 @@ export default function SessionReplay({ sessionId, serverUrl }: SessionReplayPro
         
         // Check if recording is disabled for this site
         if (data.disabled || data.error === 'recording_disabled') {
-          throw new Error("Recording is disabled for this site");
+          setError("Recording is disabled for this site");
+          setLoading(false);
+          return;
         }
         
+        // Recording is ready - stop fetching
         setRecording(data);
         setError(null);
+        setLoading(false);
+        console.log('Recording found and ready, stopping fetch attempts');
       } catch (err: any) {
         console.error("Recording fetch error:", err);
         
+        // Handle network errors or unexpected errors
         if (err.message.includes('still processing') || err.message.includes('not ready')) {
           // Retry logic for processing recordings
           if (retryCount < 5) {
@@ -81,15 +94,16 @@ export default function SessionReplay({ sessionId, serverUrl }: SessionReplayPro
               setRetryCount(prev => prev + 1);
             }, 5000);
           } else {
-            setError(err.message || "Failed to fetch recording");
+            setError("Recording is taking longer than expected. Please wait and try again.");
+            setLoading(false);
           }
         } else if (err.message.includes('disabled')) {
           setError(err.message);
+          setLoading(false);
         } else {
-          setError(err.message || "Failed to fetch recording");
+          setError("Unable to fetch recording. Please check your connection and try again.");
+          setLoading(false);
         }
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -255,69 +269,31 @@ export default function SessionReplay({ sessionId, serverUrl }: SessionReplayPro
     setError(null);
   };
 
-  // Show loading spinner while fetching
-  if (loading) {
+  // Show simple loading spinner for all states except when replay is ready
+  if (!recording || !recording.events || recording.events.length < 2) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">
-            {retryCount > 0 
-              ? `Processing recording... (attempt ${retryCount + 1}/5)`
-              : 'Loading recording...'
-            }
-          </p>
-          {retryCount > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Retrying in 5 seconds...
-            </p>
-          )}
+          <div className="w-full flex-1 flex items-center justify-center"> 
+          <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Show error with retry option
-  if (error) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive mb-4">{error}</p>
-          {retryCount < 5 && (
-            <Button onClick={handleRetry} className="mr-2">
-              Retry ({5 - retryCount} attempts left)
-            </Button>
-          )}
-          <Button onClick={() => window.location.reload()}>Reload Page</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // No need for intermediate state - replay shows directly when ready
-
-  // Show the actual replay player
-  if (recording && recording.events && recording.events.length >= 2) {
-    return (
-      <div className="w-full h-full flex items-center justify-center p-4">
-        <div 
-          ref={containerRef} 
-          className="border border-gray-200 rounded-lg bg-white relative w-full h-full"
-          style={{ 
-            minHeight: '400px',
-            maxWidth: '100%',
-            maxHeight: '100%',
-            overflow: 'hidden' // Additional safety
-          }}
-        />
-      </div>
-    );
-  }
-
-  // Fallback
+  // Show the actual replay player only when recording is fully ready
   return (
-    <div className="w-full h-full flex items-center justify-center">
-      <p className="text-muted-foreground">No recording available</p>
+    <div className="w-full h-full">
+      <div 
+        ref={containerRef} 
+        className="border border-gray-200 rounded-lg bg-white relative w-full h-full"
+        style={{ 
+          minHeight: '400px',
+          maxWidth: '100%',
+          maxHeight: '100%',
+          overflow: 'hidden' // Additional safety
+        }}
+      />
     </div>
   );
 }
