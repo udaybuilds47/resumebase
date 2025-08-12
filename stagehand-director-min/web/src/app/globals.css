@@ -1,17 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
 
-@font-face {
-  font-family: 'GT Pressura Extended';
-  src: url('/fonts/GT-Pressura-Extended.woff2') format('woff2'),
-       url('/fonts/GT-Pressura-Extended.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
+/* stylelint-disable at-rule-no-unknown */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
 
 @layer base {
   body {
