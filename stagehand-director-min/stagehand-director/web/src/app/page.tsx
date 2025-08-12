@@ -45,8 +45,8 @@ export default function Home() {
     <main className="h-screen max-w-6xl mx-auto p-3 flex flex-col overflow-hidden">
       <Card className="flex-shrink-0 mb-2">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-bold">
-            Director-style Agent (Stagehand × Browserbase) — Live
+          <CardTitle className="text-3xl font-normal font-spectra">
+            resumebase
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
