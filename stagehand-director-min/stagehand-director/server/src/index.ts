@@ -93,6 +93,25 @@ async function build() {
     }
   });
 
+  // Get session recording for replay
+  app.get("/recording/:sessionId", async (req, reply) => {
+    const { sessionId } = req.params as { sessionId: string };
+    
+    if (!sessionId) {
+      return reply.code(400).send({ error: "Missing session ID" });
+    }
+
+    try {
+      const bb = new Browserbase({ apiKey: process.env.BROWSERBASE_API_KEY! });
+      const recording = await bb.sessions.recording.retrieve(sessionId);
+      
+      // Wrap the recording data in the expected format for the frontend
+      reply.send({ events: recording });
+    } catch (e: any) {
+      return reply.code(500).send({ error: e?.message || "Failed to retrieve recording" });
+    }
+  });
+
   return app;
 }
 

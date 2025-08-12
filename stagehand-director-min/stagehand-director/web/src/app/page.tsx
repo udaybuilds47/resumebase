@@ -4,16 +4,18 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import SessionReplay from "@/components/SessionReplay";
 
 type RunStart = { runId: string; sessionId: string; viewerUrl: string | null };
 
 export default function Home() {
   const [prompt, setPrompt] = useState(
-    'Go to Google Careers and list 5 software engineer jobs in New York as JSON {title, location, link}.'
+    'go to duckduck go search for uday sai savitha and open his linkedin'
   );
   const [loading, setLoading] = useState(false);
   const [run, setRun] = useState<RunStart | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'live' | 'replay'>('live');
 
   const server = useMemo(
     () => process.env.NEXT_PUBLIC_SERVER_URL || "http://127.0.0.1:8787",
@@ -42,7 +44,7 @@ export default function Home() {
   };
 
   return (
-    <main className={`h-screen max-w-6xl mx-auto p-3 flex flex-col overflow-hidden ${!run ? 'justify-center items-center' : ''}`}>
+    <main className={`min-h-screen max-w-6xl mx-auto p-3 flex flex-col ${!run ? 'justify-center items-center' : ''}`}>
       <Card className={`transition-all duration-500 ease-in-out ${!run ? 'w-full max-w-2xl' : 'flex-shrink-0 mb-2'}`}>
         <CardHeader className="pb-3">
           <CardTitle className="text-3xl font-normal font-serif">
@@ -60,7 +62,7 @@ export default function Home() {
             <Button
               onClick={start}
               disabled={loading}
-              className="whitespace-nowrap font-sans"
+              className="whitespace-nowrap font-sans font-normal"
             >
               {loading ? "Starting…" : "Run"}
             </Button>
@@ -75,7 +77,7 @@ export default function Home() {
       </Card>
 
       {run && (
-        <Card className="flex-1 flex flex-col overflow-hidden animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+        <Card className="flex-1 flex flex-col animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
           <CardHeader className="pb-3 flex-shrink-0">
             <div className="flex gap-3 items-center flex-wrap text-sm">
               <div className="font-serif"><b>Session:</b> <span className="font-sans">{run.sessionId ?? "—"}</span></div>
@@ -90,9 +92,31 @@ export default function Home() {
                 </a>
               )}
             </div>
+            
+            {/* Tab Navigation */}
+            <div className="flex gap-2 mt-3">
+              <Button
+                variant={activeTab === 'live' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('live')}
+                disabled={!run.viewerUrl}
+                className="font-normal"
+              >
+                Live View
+              </Button>
+              <Button
+                variant={activeTab === 'replay' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('replay')}
+                disabled={!run.sessionId}
+                className="font-normal"
+              >
+                Session Replay
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent className="pt-0 flex-1 flex flex-col overflow-hidden">
-            {run.viewerUrl ? (
+          <CardContent className="pt-0 flex-1 flex flex-col">
+            {activeTab === 'live' && run.viewerUrl ? (
               <iframe
                 key={run.runId} // ensure reload per run
                 src={run.viewerUrl}
@@ -101,8 +125,10 @@ export default function Home() {
                 sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
                 allow="clipboard-read; clipboard-write; fullscreen"
               />
+            ) : activeTab === 'replay' && run.sessionId ? (
+              <SessionReplay sessionId={run.sessionId} serverUrl={server} />
             ) : (
-              <p className="font-sans">No viewer URL returned.</p>
+              <p className="font-sans">No content available for selected tab.</p>
             )}
           </CardContent>
         </Card>
