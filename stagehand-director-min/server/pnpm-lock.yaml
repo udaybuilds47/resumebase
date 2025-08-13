@@ -23,6 +23,9 @@ importers:
       openai:
         specifier: ^5.12.2
         version: 5.12.2(ws@8.18.3)(zod@3.25.76)
+      playwright-core:
+        specifier: ^1.46.1
+        version: 1.54.2
     devDependencies:
       '@types/node':
         specifier: ^24.2.1

@@ -12,6 +12,7 @@ export default function Home() {
   const [prompt, setPrompt] = useState(
     'go to duckduck'
   );
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [run, setRun] = useState<RunStart | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -243,14 +244,47 @@ export default function Home() {
     setFetchingRecording(false);
 
     try {
-      const r = await fetch(`${server}/start`, {
+      // Build an instruction that hints the agent to use the upload tool
+      const safeName = uploadFile ? (uploadFile.name.replace(/[^A-Za-z0-9._-]/g, '_') || 'upload.bin') : '';
+      const composedPrompt = uploadFile
+        ? `${prompt}\nA file named '${safeName}' has been provided. Use setInputFiles to attach it to the file input.`
+        : prompt;
+
+      // Step 1: create a session (does not start agent)
+      const r = await fetch(`${server}/session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt: composedPrompt }),
       });
       const data: RunStart | { error: string } = await r.json();
       if (!r.ok || (data as any).error) throw new Error((data as any).error || "Start failed");
       setRun(data as RunStart);
+
+      // Step 2: if a file was selected, upload it and await completion
+      let remotePathFromUpload: string | null = null;
+      if (uploadFile && (data as any).sessionId) {
+        const uploadRes = await fetch(`${server}/uploads/${(data as any).sessionId}?filename=${encodeURIComponent(safeName)}` , {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/octet-stream' },
+          body: uploadFile,
+        });
+        try {
+          const uploadJson = await uploadRes.json();
+          if (uploadRes.ok && uploadJson?.remotePath) {
+            remotePathFromUpload = uploadJson.remotePath as string;
+          }
+        } catch {}
+      }
+
+      // Step 3: start the agent for this session
+      if ((data as any).sessionId) {
+        const finalPrompt = `${prompt}\nA file named '${safeName}' has been provided. Use the 'upload_and_attach_file' tool to attach it to the correct file input (do not open OS dialogs).`;
+        await fetch(`${server}/run`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: (data as any).sessionId, prompt: finalPrompt }),
+        });
+      }
     } catch (e: any) {
       setErr(e.message ?? "Failed to start");
     } finally {
@@ -281,6 +315,15 @@ export default function Home() {
             >
               {loading ? "Starting…" : "Run"}
             </Button>
+          </div>
+
+          {/* Optional file to make available to the agent */}
+          <div className="mb-2">
+            <input
+              type="file"
+              onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
+              className="font-sans border rounded px-3 py-2"
+            />
           </div>
 
           {err && (
