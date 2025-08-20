@@ -63,20 +63,88 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="h-screen bg-gray-50 overflow-hidden">
       {!sessionData ? (
         // Centered layout when no session
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="h-full flex items-center justify-center p-4">
           <Card className="w-full max-w-5xl shadow-lg">
-            <CardHeader>
-              <h1 className="text-3xl font-semibold">resumebase</h1>
+            <CardHeader className="pb-3">
+              <h1 className="text-2xl font-semibold">resumebase</h1>
               <p className="text-muted-foreground text-sm">
                 drop the link to the application here
               </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2 items-center">
+            <CardContent className="pb-4">
+              <div className="flex gap-2">
+                <Input
+                  type="search"
+                  placeholder="Enter application URL..."
+                  className="w-full"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleApply()}
+                />
+
+                {/* Hidden PDF input */}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  id="resume-upload"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+
+                {/* Paperclip opens file picker */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="flex-shrink-0"
+                  onClick={() =>
+                    document.getElementById("resume-upload")?.click()
+                  }
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  type="submit"
+                  className="px-6"
+                  onClick={handleApply}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Starting..." : "apply"}
+                </Button>
+              </div>
+
+              {/* File badge */}
+              {selectedFile && (
+                <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-md w-fit mt-2">
+                  <span>{selectedFile.name}</span>
+                  <button
+                    onClick={() => setSelectedFile(null)}
+                    className="text-gray-500 hover:text-red-500"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        // Compact layout when session is active - both cards fit in one viewport
+        <div className="h-full flex flex-col items-center p-4 gap-4">
+          {/* Application Card - Top (compact) */}
+          <div className="w-full flex justify-center">
+            <Card className="w-full max-w-5xl shadow-lg flex-shrink-0">
+              <CardHeader className="pb-3">
+                <h1 className="text-2xl font-semibold">resumebase</h1>
+                <p className="text-muted-foreground text-sm">
+                  drop the link to the application here
+                </p>
+              </CardHeader>
+              <CardContent className="pb-4">
+                <div className="flex gap-2">
                   <Input
                     type="search"
                     placeholder="Enter application URL..."
@@ -90,7 +158,7 @@ export default function Home() {
                   <input
                     type="file"
                     accept="application/pdf"
-                    id="resume-upload"
+                    id="resume-upload-session"
                     className="hidden"
                     onChange={handleFileChange}
                   />
@@ -101,7 +169,7 @@ export default function Home() {
                     size="icon"
                     className="flex-shrink-0"
                     onClick={() =>
-                      document.getElementById("resume-upload")?.click()
+                      document.getElementById("resume-upload-session")?.click()
                     }
                   >
                     <Paperclip className="h-4 w-4" />
@@ -119,7 +187,7 @@ export default function Home() {
 
                 {/* File badge */}
                 {selectedFile && (
-                  <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-md w-fit">
+                  <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-md w-fit mt-2">
                     <span>{selectedFile.name}</span>
                     <button
                       onClick={() => setSelectedFile(null)}
@@ -129,51 +197,16 @@ export default function Home() {
                     </button>
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        // Top layout when session is active
-        <div className="h-screen flex flex-col p-4">
-          {/* Application Card - Top */}
-          <div className="flex justify-center mb-4">
-            <Card className="w-full max-w-5xl shadow-lg">
-              <CardHeader>
-                <h1 className="text-3xl font-semibold">resumebase</h1>
-                <p className="text-muted-foreground text-sm">
-                  drop the link to the application here
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    type="search"
-                    placeholder="Enter application URL..."
-                    className="w-full"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleApply()}
-                  />
-                  <Button
-                    type="submit"
-                    className="px-6"
-                    onClick={handleApply}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Starting..." : "apply"}
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Session Window - Below */}
-          <div className="flex justify-center flex-1 min-h-0">
-            <Card className="w-full max-w-5xl shadow-lg flex flex-col">
-              <CardHeader className="flex-shrink-0">
+          {/* Session Window - Below (takes remaining space) */}
+          <div className="w-full flex justify-center flex-1 min-h-0">
+            <Card className="w-full max-w-5xl shadow-lg flex flex-col min-h-0">
+              <CardHeader className="flex-shrink-0 pb-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold">Live Session</h2>
+                  <h2 className="text-2xl font-semibold">live session</h2>
                   <Button
                     variant="destructive"
                     size="sm"
@@ -209,7 +242,7 @@ export default function Home() {
               </CardHeader>
               <CardContent className="flex-1 min-h-0 p-0">
                 {/* Live Video Section */}
-                <div className="w-full h-full p-6">
+                <div className="w-full h-full p-4">
                   <div className="bg-black rounded-lg overflow-hidden w-full h-full">
                     {sessionData.viewerUrl ? (
                       <iframe

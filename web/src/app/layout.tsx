@@ -16,8 +16,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Blank Page",
-  description: "A clean blank page",
+  title: "resumebase",
+  description: "ai agent to skip the line and get more interviews",
 };
 
 export default function RootLayout({
