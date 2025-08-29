@@ -1,130 +1,119 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Browserbase } from "@browserbasehq/sdk";
 import { Stagehand } from "@browserbasehq/stagehand";
-import { GoogleGenAI } from "@google/genai";
-import { z } from "zod";
+import crypto from "node:crypto";
 
-const browserbase = new Browserbase({
-  apiKey: process.env.BROWSERBASE_API_KEY || "",
-});
+const ALLOWLIST = (process.env.ALLOWLIST ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const SYSTEM_PROMPT = [
+  ALLOWLIST.length
+    ? `Only navigate within these domains (and their subpaths): ${ALLOWLIST.join(", ")}.`
+    : `Before navigating anywhere, ask the user for an allowed domain.`,
+  "If required info is missing, ask before proceeding.",
+  "Never attempt to bypass login, paywalls, CAPTCHA, or MFA.",
+  "Prefer robust actions by visible text/role over brittle CSS selectors.",
+  "When the task implies a list, return strictly JSON (no prose).",
+  "Once you've produced the requested JSON, issue a 'close' step and stop.",
+].join("\n");
 
 export async function POST(request: NextRequest) {
   try {
-    const { action, url, sessionId } = await request.json();
+    const body = (await request.json()) as { prompt?: string; jobUrl?: string; url?: string };
+    const promptFromBody = (body.prompt || "").trim();
+    const jobUrl = (body.jobUrl || "").trim();
+    const url = (body.url || "").trim();
 
-    if (!action) {
-      return NextResponse.json({ error: "Action is required (start or stop)" }, { status: 400 });
-    }
-    if (!process.env.BROWSERBASE_API_KEY) {
+    // Build instruction from either prompt or a provided URL
+    const instruction =
+      promptFromBody ||
+      (jobUrl
+        ? `Navigate to ${jobUrl} and complete the entire job application form. Fill all required fields with realistic mock data, upload a resume if needed, and submit.`
+        : url
+        ? `Navigate to ${url} and complete the task as appropriate.`
+        : "");
+
+    if (!instruction) {
       return NextResponse.json(
-        { error: "Browserbase API key not configured" },
-        { status: 500 }
-      );
-    }
-    if (!process.env.BROWSERBASE_PROJECT_ID) {
-      return NextResponse.json(
-        { error: "Browserbase Project ID not configured" },
-        { status: 500 }
-      );
-    }
-    if (!process.env.GOOGLE_API_KEY || !process.env.GOOGLE_MODEL) {
-      return NextResponse.json(
-        { error: "Google Gemini API key or model not configured" },
-        { status: 500 }
+        { error: "Missing prompt. Provide 'prompt' or 'jobUrl' (or 'url')." },
+        { status: 400 }
       );
     }
 
-    const projectId = process.env.BROWSERBASE_PROJECT_ID;
+    const modelName =
+      process.env.GOOGLE_MODEL || process.env.OPENAI_MODEL || "openai/gpt-4o-mini";
+    const modelClientOptions = modelName.startsWith("google/")
+      ? { apiKey: process.env.GOOGLE_API_KEY! }
+      : { apiKey: process.env.OPENAI_API_KEY! };
 
-    if (action === "start") {
-        if (!url) {
-          return NextResponse.json(
-            { error: "URL is required for starting session" },
-            { status: 400 }
-          );
-        }
-      
-        // 1. Start a Browserbase session
-        const session = await browserbase.sessions.create({ projectId });
-      
-        // 2. Kick off Stagehand navigation asynchronously
-        (async () => {
-          try {
-            const stagehand = new Stagehand({
-              env: "BROWSERBASE",
-              apiKey: process.env.BROWSERBASE_API_KEY!,
-              projectId,
-              browserbaseSessionID: session.id,  // ✅ typo fixed (ID not ID)
-              modelName: process.env.GOOGLE_MODEL!,
-              modelClientOptions: {
-                apiKey: process.env.GOOGLE_API_KEY!,
-              },
-            });
-      
-            await stagehand.init();
-            await stagehand.page.goto(url);
-            // Don’t close stagehand here – let the session stay live
-          } catch (err) {
-            console.error("Background navigation failed:", err);
-          }
-        })();
-      
-        // 3. Return immediately with viewerUrl so frontend iframe loads right away
-        let viewerUrl: string | null = null;
-        try {
-          const dbg = await browserbase.sessions.debug(session.id);
-          viewerUrl = dbg?.debuggerFullscreenUrl ?? dbg?.debuggerUrl ?? null;
-        } catch {
-          viewerUrl = session.connectUrl
-            ? session.connectUrl.replace("wss://", "https://").replace("ws://", "http://")
-            : null;
-        }
-      
-        return NextResponse.json({
-          success: true,
-          session: {
-            sessionId: session.id,
-            url,
-            status: "active",
-            timestamp: new Date().toISOString(),
-            browserbaseData: session,
-            sessionUrl: session.connectUrl || session.seleniumRemoteUrl || null,
-            viewerUrl,
-          },
-          message: "Browserbase session started — navigating in background",
+    const stagehand = new Stagehand({
+      env: "BROWSERBASE",
+      apiKey: process.env.BROWSERBASE_API_KEY!,
+      projectId: process.env.BROWSERBASE_PROJECT_ID!,
+      modelName,
+      modelClientOptions,
+      systemPrompt: SYSTEM_PROMPT,
+    });
+
+    const { sessionId, sessionUrl, debugUrl } = await stagehand.init();
+
+    let viewerUrl: string | null = sessionUrl ?? debugUrl ?? null;
+    try {
+      if (sessionId) {
+        const bb = new Browserbase({ apiKey: process.env.BROWSERBASE_API_KEY! });
+        const dbg = await bb.sessions.debug(sessionId);
+        viewerUrl = dbg?.debuggerFullscreenUrl ?? dbg?.debuggerUrl ?? viewerUrl;
+      }
+    } catch {
+      // ignore; we'll just use sessionUrl/debugUrl
+    }
+
+    const response = NextResponse.json({
+      runId: crypto.randomUUID(),
+      sessionId,
+      viewerUrl,
+    });
+
+    queueMicrotask(async () => {
+      try {
+        const operator = stagehand.agent();
+        await operator.execute({
+          instruction,
+          maxSteps: 25,
+          autoScreenshot: true,
         });
+      } catch {
+        // swallow errors (no logging requested)
+      } finally {
+        try {
+          await stagehand.close();
+        } catch {}
       }
+    });
 
-    if (action === "stop") {
-      if (!sessionId) {
-        return NextResponse.json(
-          { error: "Session ID is required for stopping session" },
-          { status: 400 }
-        );
-      }
+    return response;
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Failed to start" }, { status: 500 });
+  }
+}
 
-      await browserbase.sessions.update(sessionId, {
-        projectId,
-        status: "REQUEST_RELEASE",
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: "Session stopped successfully",
-      });
+// Single-route GET that mirrors /recording/:sessionId via query param: /api/session?sessionId=...
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get("sessionId");
+    if (!sessionId) {
+      return NextResponse.json({ error: "Missing session ID" }, { status: 400 });
     }
 
+    const bb = new Browserbase({ apiKey: process.env.BROWSERBASE_API_KEY! });
+    const recording = await bb.sessions.recording.retrieve(sessionId);
+    return NextResponse.json({ events: recording });
+  } catch (e: any) {
     return NextResponse.json(
-      { error: 'Invalid action. Use "start" or "stop"' },
-      { status: 400 }
-    );
-  } catch (error) {
-    console.error("Error in session operation:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to perform session operation",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
+      { error: e?.message || "Failed to retrieve recording" },
       { status: 500 }
     );
   }

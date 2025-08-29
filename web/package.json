@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "PINO_WORKER_THREADS=false PINO_WORKER_THREADS_ENABLED=false next dev --turbopack",
+    "build": "PINO_WORKER_THREADS=false PINO_WORKER_THREADS_ENABLED=false next build",
+    "start": "PINO_WORKER_THREADS=false PINO_WORKER_THREADS_ENABLED=false next start",
     "lint": "next lint"
   },
   "dependencies": {

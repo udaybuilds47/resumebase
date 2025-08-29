@@ -9,10 +9,6 @@ import { Paperclip, X } from "lucide-react";
 
 interface SessionData {
   sessionId: string;
-  url: string;
-  status: string;
-  timestamp: string;
-  sessionUrl: string | null;
   viewerUrl?: string | null;
 }
 
@@ -38,16 +34,16 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ action: "start", url: inputValue }),
+        body: JSON.stringify({ url: inputValue }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
         console.log("Session started:", data);
-        setSessionData(data.session);
+        setSessionData({ sessionId: data.sessionId, viewerUrl: data.viewerUrl ?? null });
         toast.success(
-          `Browserbase session started successfully! Session ID: ${data.session.sessionId}`
+          `Stagehand session started! Session ID: ${data.sessionId}`
         );
         setInputValue(""); // Clear input after success
       } else {
