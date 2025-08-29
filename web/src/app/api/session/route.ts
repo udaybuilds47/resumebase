@@ -21,10 +21,11 @@ const SYSTEM_PROMPT = [
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { prompt?: string; jobUrl?: string; url?: string };
+    const body = (await request.json()) as { prompt?: string; jobUrl?: string; url?: string; resumeUrl?: string };
     const promptFromBody = (body.prompt || "").trim();
     const jobUrl = (body.jobUrl || "").trim();
     const url = (body.url || "").trim();
+    const resumeUrl = (body.resumeUrl || "").trim();
 
     // Build instruction from either prompt or a provided URL
     const instruction =
@@ -79,6 +80,35 @@ export async function POST(request: NextRequest) {
     queueMicrotask(async () => {
       try {
         const operator = stagehand.agent();
+
+        // If a resume URL is provided (e.g., Supabase public URL), fetch to buffer and attempt upload
+        let resumeFileSpec: { name: string; mimeType: string; buffer: Buffer } | null = null;
+        if (resumeUrl) {
+          try {
+            const res = await fetch(resumeUrl);
+            const ab = await res.arrayBuffer();
+            const mimeType = res.headers.get("content-type") || "application/octet-stream";
+            const urlName = (() => {
+              try { return new URL(resumeUrl).pathname.split("/").pop() || "resume"; } catch { return "resume"; }
+            })();
+            const name = urlName.includes(".") ? urlName : `${urlName}.pdf`;
+            resumeFileSpec = { name, mimeType, buffer: Buffer.from(ab) };
+          } catch {}
+        }
+
+        const tryUploadResume = async () => {
+          if (!resumeFileSpec) return;
+          for (let i = 0; i < 5; i += 1) {
+            try {
+              const r = await stagehand.upload("resume", resumeFileSpec);
+              if (r?.success) break;
+            } catch {}
+            await new Promise((r) => setTimeout(r, 3000));
+          }
+        };
+        // Delay slightly to give the agent time to reach the form before attempting upload
+        void (async () => { await new Promise(r => setTimeout(r, 4000)); await tryUploadResume(); })();
+
         await operator.execute({
           instruction,
           maxSteps: 25,

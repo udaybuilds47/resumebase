@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@browserbasehq/sdk": "^2.6.0",
-    "@browserbasehq/stagehand": "^2.4.2",
+    "@browserbasehq/stagehand": "file:/Users/udaysavitha/pdev/resumebase/pack/browserbasehq-stagehand-2.4.4.tgz",
     "@google/genai": "^1.14.0",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
