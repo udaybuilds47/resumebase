@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "PINO_WORKER_THREADS=false PINO_WORKER_THREADS_ENABLED=false next dev",
-    "build": "PINO_WORKER_THREADS=false PINO_WORKER_THREADS_ENABLED=false next build",
-    "start": "PINO_WORKER_THREADS=false PINO_WORKER_THREADS_ENABLED=false next start",
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@browserbasehq/sdk": "^2.6.0",
-    "@browserbasehq/stagehand": "^2.4.3",
+    "@browserbasehq/stagehand": "^2.4.2",
     "@google/genai": "^1.14.0",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
@@ -26,7 +26,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20.19.11",
+    "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
