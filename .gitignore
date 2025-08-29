@@ -149,3 +149,6 @@ docker-compose.override.yml
 
 # Local development
 .local/
+
+# Allow committing this specific local Stagehand tarball
+!/pack/browserbasehq-stagehand-2.4.4.tgz
