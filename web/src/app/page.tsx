@@ -17,10 +17,36 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
+      setUploadedFileUrl(null); // Reset uploaded URL when new file is selected
+    }
+  };
+
+  const uploadFileToSupabase = async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Upload failed");
+      }
+
+      const data = await response.json();
+      return data.url;
+    } catch (error) {
+      console.error("File upload error:", error);
+      toast.error(`File upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      return null;
     }
   };
 
@@ -29,12 +55,31 @@ export default function Home() {
 
     setIsLoading(true);
     try {
+      let resumeUrl: string | undefined;
+
+      // If a file is selected, upload it to Supabase first
+      if (selectedFile) {
+        toast.info("Uploading resume...");
+        const uploadedUrl = await uploadFileToSupabase(selectedFile);
+        if (!uploadedUrl) {
+          setIsLoading(false);
+          return; // Stop if upload failed
+        }
+        resumeUrl = uploadedUrl;
+        setUploadedFileUrl(uploadedUrl);
+        toast.success("Resume uploaded successfully!");
+      }
+
+      // Start the session with the resume URL if available
       const response = await fetch("/api/session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url: inputValue }),
+        body: JSON.stringify({ 
+          url: inputValue,
+          resumeUrl: resumeUrl 
+        }),
       });
 
       const data = await response.json();
@@ -56,6 +101,11 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
+    setUploadedFileUrl(null);
   };
 
   return (
@@ -114,14 +164,21 @@ export default function Home() {
 
               {/* File badge */}
               {selectedFile && (
-                <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-md w-fit mt-2">
-                  <span>{selectedFile.name}</span>
-                  <button
-                    onClick={() => setSelectedFile(null)}
-                    className="text-gray-500 hover:text-red-500"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                <div className="flex flex-col gap-2 mt-2">
+                  <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-md w-fit">
+                    <span>{selectedFile.name}</span>
+                    <button
+                      onClick={removeFile}
+                      className="text-gray-500 hover:text-red-500"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  {uploadedFileUrl && (
+                    <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                      ✓ Resume uploaded and ready for Stagehand
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -183,14 +240,21 @@ export default function Home() {
 
                 {/* File badge */}
                 {selectedFile && (
-                  <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-md w-fit mt-2">
-                    <span>{selectedFile.name}</span>
-                    <button
-                      onClick={() => setSelectedFile(null)}
-                      className="text-gray-500 hover:text-red-500"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-md w-fit">
+                      <span>{selectedFile.name}</span>
+                      <button
+                        onClick={removeFile}
+                        className="text-gray-500 hover:text-red-500"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                    {uploadedFileUrl && (
+                      <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                        ✓ Resume uploaded and ready for Stagehand
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
