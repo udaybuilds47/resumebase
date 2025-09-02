@@ -105,6 +105,9 @@ SUCCESS CRITERIA (do not stop early):
       systemPrompt: SYSTEM_PROMPT,
       verbose: 2, // Enable maximum verbose logging (0=error, 1=info, 2=debug)
       logInferenceToFile: true, // Save detailed reasoning to log files
+      experimental: true, // enable iframe-aware observation & deep selectors
+      domSettleTimeoutMs: 15000,
+      selfHeal: true,
     });
 
     const { sessionId, sessionUrl, debugUrl } = await stagehand.init();
@@ -190,6 +193,7 @@ SUCCESS CRITERIA (do not stop early):
           instruction,
           maxSteps: 75, // Increased for complex form completion
           autoScreenshot: true,
+          waitBetweenActions: 400,
         });
         
         fileLogger.logStagehandReasoning('Agent execution completed', { 
