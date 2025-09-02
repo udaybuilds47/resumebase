@@ -66,8 +66,4 @@ export class FileLogger {
   logDecision(reasoning: string, decision: string, data?: any) {
     this.log('reasoning', `🧠 DECISION: ${reasoning} → ${decision}`, data);
   }
-
-  getLogFilePath() {
-    return this.getLogFilePath();
-  }
 }

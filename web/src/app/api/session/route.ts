@@ -5,15 +5,8 @@ import crypto from "node:crypto";
 import { stagehandLogger } from "@/lib/logger";
 import { FileLogger } from "@/lib/fileLogger";
 
-const ALLOWLIST = (process.env.ALLOWLIST ?? "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-
 const SYSTEM_PROMPT = [
-  ALLOWLIST.length
-    ? `Only navigate within these domains (and their subpaths): ${ALLOWLIST.join(", ")}.`
-    : `Before navigating anywhere, ask the user for an allowed domain.`,
+  "Go to the open web to accomplish the user's goal.",
   "If required info is missing, ask before proceeding.",
   "Never attempt to bypass login, paywalls, CAPTCHA, or MFA.",
   "Prefer robust actions by visible text/role over brittle CSS selectors.",
@@ -65,20 +58,29 @@ export async function POST(request: NextRequest) {
     const instruction =
       promptFromBody ||
       (jobUrl
-        ? `Navigate to ${jobUrl} and complete the job application like a human would:
+        ? `Go to ${jobUrl} and fully complete the entire job application end‑to‑end.
 
-1. **READ THE ENTIRE PAGE FIRST** - Scan the complete layout to understand the form structure
-2. **IDENTIFY THE MAIN APPLICATION FORM** - Look for the primary job application form, not duplicate/auxiliary forms
-3. **ANALYZE FORM FIELDS** - Identify all required fields and understand what information is needed
-4. **FILL FIELDS LOGICALLY** - Fill each field with realistic mock data (names, email, phone, address, etc.)
-5. **UPLOAD RESUME** - Look for resume upload fields and upload from: ${resumeUrl || 'No resume provided'}
-6. **COMPLETE MULTI-STEP FORMS** - Follow navigation buttons and complete each step thoroughly
-7. **FIND THE PRIMARY SUBMIT BUTTON** - Look for 'Submit Application' or main 'Submit' button, not duplicate 'Apply' buttons
-8. **SUBMIT THE APPLICATION** - Submit only when all required fields in the main form are completed
+MUST‑DO STEPS:
+1) Read the whole page to understand the layout and identify the main application form.
+2) Fill ALL required fields with realistic mock data (name, email, phone, address, dates, etc.).
+3) If a resume/CV upload is present, attach the provided resume file. If not provided, proceed without it.
+4) Advance through every step/section until you reach the final submission.
+5) Submit the application using the primary “Submit Application”/“Submit” button (not a secondary Apply).
 
-Think like a human: read everything first, identify the main form, fill it completely, then submit.`
+SUCCESS CRITERIA (do not stop early):
+- Only finish after you actually submit and see confirmation (e.g., confirmation page/text, tracking ID, or success banner). If submission fails, handle validation errors and retry.
+`
         : url
-        ? `Navigate to ${url} and complete the task as appropriate.`
+        ? `Go to ${url} and fully complete the entire application/task to final submission.
+
+MUST‑DO STEPS:
+1) Read the page, identify the main form.
+2) Fill ALL required fields with realistic mock data.
+3) Upload the provided resume file if applicable.
+4) Advance through every step/section and submit.
+
+SUCCESS CRITERIA (do not stop early):
+- Only finish after successful submission is clearly confirmed on the site. Handle validation errors and retry until submitted or steps exhausted.`
         : "");
 
     if (!instruction) {
@@ -144,6 +146,38 @@ Think like a human: read everything first, identify the main form, fill it compl
         } else {
           fileLogger.log('info', '⚠️ No resume URL provided - will use mock data only');
         }
+
+        // Proactively upload the resume file into the Stagehand session so the agent can attach it
+        const tryUploadResume = async () => {
+          if (!resumeUrl) return;
+          try {
+            const res = await fetch(resumeUrl);
+            const ab = await res.arrayBuffer();
+            const mimeType = res.headers.get('content-type') || 'application/pdf';
+            const urlName = (() => {
+              try { return new URL(resumeUrl).pathname.split('/')?.pop() || 'resume.pdf'; } catch { return 'resume.pdf'; }
+            })();
+            const name = urlName.includes('.') ? urlName : 'resume.pdf';
+            const fileSpec = { name, mimeType, buffer: Buffer.from(ab) } as const;
+
+            for (let i = 0; i < 5; i += 1) {
+              try {
+                const r = await stagehand.upload('resume', fileSpec);
+                if (r?.success) {
+                  fileLogger.log('info', '📎 Resume uploaded to session', { name: fileSpec.name });
+                  return;
+                }
+              } catch {}
+              await new Promise((r) => setTimeout(r, 1500));
+            }
+            fileLogger.log('error', '❌ Resume upload did not report success after retries');
+          } catch (e: any) {
+            fileLogger.log('error', '❌ Failed to fetch/upload resume', { error: e?.message || String(e) });
+          }
+        };
+
+        // Small delay to let the agent navigate before attempting upload (helps some UIs detect the file input)
+        void (async () => { await new Promise(r => setTimeout(r, 3000)); await tryUploadResume(); })();
 
         // Custom logging to capture Stagehand's reasoning
         stagehandLogger.log('info', '🚀 Starting Stagehand agent', { instruction });
