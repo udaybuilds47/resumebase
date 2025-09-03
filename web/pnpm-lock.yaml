@@ -193,7 +193,7 @@ packages:
     resolution: {integrity: sha512-83iXP5D7xMm8Wyn66TUaUrgoByCmAJuoMoZQI3sGg3JAiMlTfnCIMqyVBoNSaItaPIkaCnrsj6LiusmXV2X9YA==}
 
   '@browserbasehq/stagehand@file:../pack/browserbasehq-stagehand-2.4.4.tgz':
-    resolution: {integrity: sha512-K6u9uBdWWUy1k21fLglGgGakPkk0wTbWK1tsdDEUGuq2aJIBsd2p4VAHEhSYH5JSU9pRPYQnF5NuFR2gQfqJ3Q==, tarball: file:../pack/browserbasehq-stagehand-2.4.4.tgz}
+    resolution: {integrity: sha512-BX8Y7tg5bAmsW2BPztudUHjXwGUf77TLD6a97BctFp1Pm0BuyA4SRF5fk+la0fBa4b+Rfk5efEF6dkfVbwY6Kw==, tarball: file:../pack/browserbasehq-stagehand-2.4.4.tgz}
     version: 2.4.4
     peerDependencies:
       deepmerge: ^4.3.1

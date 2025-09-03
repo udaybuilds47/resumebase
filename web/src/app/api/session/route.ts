@@ -25,6 +25,15 @@ const SYSTEM_PROMPT = [
   "- Fill all required fields marked with asterisks (*), 'required' text, or red borders",
   "- For dropdown/select fields, choose the first available option unless a specific choice is obvious",
   "- For radio buttons and checkboxes, select appropriate options based on context",
+  "",
+  "**DROPDOWN HANDLING:**",
+  "- If a dropdown is a native <select>, you may use selectOption",
+  "- If it's NOT a native <select> (e.g., React-Select, div/input with role=\"combobox\"):",
+  "  1) Click the combobox/control (or its \"Toggle\" button)",
+  "  2) Type the option text exactly",
+  "  3) Wait for [role=\"listbox\"] to appear",
+  "  4) Press Enter to confirm",
+  "  5) Never call selectOption/selectOptionFromDropdown on non-<select> elements",
   "- Fill address fields completely: street address, city, state, zip code",
   "- Use realistic dates for birth dates, graduation dates, etc.",
   "- Submit the form only when all required fields are completed",
@@ -108,6 +117,24 @@ SUCCESS CRITERIA (do not stop early):
       experimental: true, // enable iframe-aware observation & deep selectors
       domSettleTimeoutMs: 15000,
       selfHeal: true,
+      // Browser viewport configuration
+      browserbaseSessionCreateParams: {
+        projectId: process.env.BROWSERBASE_PROJECT_ID!,
+        browserSettings: {
+          viewport: {
+            width: parseInt(process.env.BROWSER_WIDTH || "1920"),
+            height: parseInt(process.env.BROWSER_HEIGHT || "1080"),
+          },
+          fingerprint: {
+            screen: {
+              minWidth: parseInt(process.env.BROWSER_WIDTH || "1920"),
+              maxWidth: parseInt(process.env.BROWSER_WIDTH || "1920"),
+              minHeight: parseInt(process.env.BROWSER_HEIGHT || "1080"),
+              maxHeight: parseInt(process.env.BROWSER_HEIGHT || "1080"),
+            },
+          },
+        },
+      },
     });
 
     const { sessionId, sessionUrl, debugUrl } = await stagehand.init();

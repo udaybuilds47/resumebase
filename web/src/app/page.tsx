@@ -90,6 +90,14 @@ export default function Home() {
         toast.success(
           `Stagehand session started! Session ID: ${data.sessionId}`
         );
+        
+        // Show toast for resume upload to Stagehand if resume was provided
+        if (resumeUrl) {
+          setTimeout(() => {
+            toast.success("✓ Resume uploaded and ready for Stagehand");
+          }, 2000); // Show after 2 seconds to indicate background processing
+        }
+        
         setInputValue(""); // Clear input after success
       } else {
         console.error("Failed to start session:", data.error);
@@ -174,11 +182,7 @@ export default function Home() {
                       <X className="h-3 w-3" />
                     </button>
                   </div>
-                  {uploadedFileUrl && (
-                    <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                      ✓ Resume uploaded and ready for Stagehand
-                    </div>
-                  )}
+
                 </div>
               )}
             </CardContent>
@@ -250,11 +254,7 @@ export default function Home() {
                         <X className="h-3 w-3" />
                       </button>
                     </div>
-                    {uploadedFileUrl && (
-                      <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                        ✓ Resume uploaded and ready for Stagehand
-                      </div>
-                    )}
+                    
                   </div>
                 )}
               </CardContent>

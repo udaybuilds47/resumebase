@@ -65,6 +65,8 @@ Required:
   - OpenAI: `OPENAI_API_KEY`, `OPENAI_MODEL` (fallback default is `openai/gpt-4o-mini`)
 Optional:
 - `ALLOWLIST` — comma‑separated domains to constrain navigation
+- `BROWSER_WIDTH` — browser viewport width (default: 1920)
+- `BROWSER_HEIGHT` — browser viewport height (default: 1080)
 
 ## System Prompt (current)
 Applied in the API route for every step:
