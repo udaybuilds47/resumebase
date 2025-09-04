@@ -62,7 +62,6 @@ const SYSTEM_PROMPT = [
   "  - Exclude non-option text: ignore group labels/headers (role='group'/'presentation') and strings like 'Suggested', 'Results', or separators like '—'/'---'.",
   "  - Perform selection using the UNIVERSAL COMBOBOX HANDLING steps (C) and then verify (D). If verification fails, retry once by reopening and reselecting; then fall back to typeahead (type label + Enter).",
   "  - Do not rewrite outside an open listbox.",
-  "  - STRICT: Never issue a 'click on StaticText' inside an open listbox. Always select an option by role/label or use typeahead + Enter, then verify the selection."
 ].join("\n");
 
 
