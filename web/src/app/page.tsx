@@ -158,7 +158,7 @@ export default function Home() {
                   onClick={handleApply}
                   disabled={isLoading}
                 >
-                  {isLoading ? "Starting..." : "apply"}
+                  {isLoading ? "starting..." : "apply"}
                 </Button>
               </div>
 
@@ -230,7 +230,7 @@ export default function Home() {
                     onClick={handleApply}
                     disabled={isLoading}
                   >
-                    {isLoading ? "Starting..." : "apply"}
+                    {isLoading ? "starting..." : "apply"}
                   </Button>
                 </div>
 
