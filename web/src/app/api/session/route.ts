@@ -16,7 +16,7 @@ const SYSTEM_PROMPT = [
   "   - combobox: open list; select by visible text via getByRole('option', { name: /…/i }); then verify the combobox displays the chosen option.",
   "   - radio/checkbox: click option by label; then verify checked=true.",
   "   - file: attach the previously uploaded asset named 'resume' to the nearest file input to the 'Resume/CV' label; verify a filename chip appears; do not re-attach if a file is already listed.",
-  "3) PRE-SUBMIT VERIFY: Iterate the checklist and ensure no field is empty (for textboxes/textareas: non-empty; for selects/comboboxes: a choice is selected; for radios/checkboxes: the intended option is checked). If a required text field has no DATA_PROFILE mapping, type 'N/A'. Fill any missed items before submitting. If either Resume or LinkedIn is acceptable, ensure at least one is present (prefer attaching resume).",
+  "3) PRE-SUBMIT VERIFY: Iterate the checklist and ensure no field is empty (for textboxes/textareas: non-empty; for selects/comboboxes: a choice is selected; for radios/checkboxes: the intended option is checked). If a required text field has no DATA_PROFILE mapping, fill relevant answers. Fill any missed items before submitting. If either Resume or LinkedIn is acceptable, ensure at least one is present (prefer attaching resume).",
   "4) SUBMIT the primary 'Submit application'/'Submit'.",
   "5) FIX ERRORS ROBUSTLY:",
   "   - Validation banners may persist until the next submit; DO NOT re-edit a field solely because an error is visible.",
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 
 MUST‑DO STEPS:
 1) INVENTORY all controls under the 'Apply for this job' form and plan your actions.
-2) FILL all required fields using DATA_PROFILE below (comboboxes/radios included). Do not skip any fields in the first pass; verify each control's value after setting it. For any required text field without a clear mapping, enter 'N/A'.
+2) FILL all required fields using DATA_PROFILE below (comboboxes/radios included). Do not skip any fields in the first pass; verify each control's value after setting it. For any required text field without a clear mapping, enter relevant values.
 3) If a resume/CV upload is present, attach the provided resume file.
 4) Advance through every step/section until final submission.
 5) SUBMIT, fix any validation errors, and re-submit until success. When errors appear, check the actual field value; if it is already filled correctly, do not edit it again—simply re-submit after addressing truly empty/mismatched fields.
@@ -124,7 +124,7 @@ ${JSON.stringify(DATA_PROFILE, null, 2)}
 
 MUST‑DO STEPS:
 1) INVENTORY controls and plan your actions.
-2) FILL all required fields using DATA_PROFILE below. Do not skip any fields in the first pass; verify each control's value after setting it. For any required text field without a clear mapping, enter 'N/A'.
+2) FILL all required fields using DATA_PROFILE below. Do not skip any fields in the first pass; verify each control's value after setting it. For any required text field without a clear mapping, enter relevant values.
 4) SUBMIT, fix validation errors, and re-submit until success.
 
 SUCCESS CRITERIA (do not stop early):

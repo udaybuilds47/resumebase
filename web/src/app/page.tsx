@@ -45,7 +45,7 @@ export default function Home() {
       return data.url;
     } catch (error) {
       console.error("File upload error:", error);
-      toast.error(`File upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      toast.error((`file upload failed: ${error instanceof Error ? error.message : "unknown error"}`).toLowerCase());
       return null;
     }
   };
@@ -59,7 +59,7 @@ export default function Home() {
 
       // If a file is selected, upload it to Supabase first
       if (selectedFile) {
-        toast.info("Uploading resume...");
+        toast.info("uploading resume...");
         const uploadedUrl = await uploadFileToSupabase(selectedFile);
         if (!uploadedUrl) {
           setIsLoading(false);
@@ -67,7 +67,7 @@ export default function Home() {
         }
         resumeUrl = uploadedUrl;
         setUploadedFileUrl(uploadedUrl);
-        toast.success("Resume uploaded successfully!");
+        toast.success("resume uploaded successfully!");
       }
 
       // Start the session with the resume URL if available
@@ -87,25 +87,17 @@ export default function Home() {
       if (response.ok) {
         console.log("Session started:", data);
         setSessionData({ sessionId: data.sessionId, viewerUrl: data.viewerUrl ?? null });
-        toast.success(
-          `Stagehand session started! Session ID: ${data.sessionId}`
-        );
+        toast.success(`resumebase session started! session id: ${data.sessionId}`);
         
-        // Show toast for resume upload to Stagehand if resume was provided
-        if (resumeUrl) {
-          setTimeout(() => {
-            toast.success("✓ Resume uploaded and ready for Stagehand");
-          }, 2000); // Show after 2 seconds to indicate background processing
-        }
         
         setInputValue(""); // Clear input after success
       } else {
         console.error("Failed to start session:", data.error);
-        toast.error(`Failed to start session: ${data.error}`);
+        toast.error(`failed to start session: ${data.error}`);
       }
     } catch (error) {
       console.error("Error starting session:", error);
-      toast.error("Error starting session. Please try again.");
+      toast.error("error starting session. please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -284,14 +276,14 @@ export default function Home() {
                         });
 
                         if (response.ok) {
-                          toast.success("Session stopped successfully");
+                          toast.success("session stopped successfully");
                           setSessionData(null); // Clear session data
                         } else {
-                          toast.error("Failed to stop session");
+                          toast.error("failed to stop session");
                         }
                       } catch (error) {
                         console.error("Error stopping session:", error);
-                        toast.error("Error stopping session");
+                        toast.error("error stopping session");
                       }
                     }}
                     className="px-4"
