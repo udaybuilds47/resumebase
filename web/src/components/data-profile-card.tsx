@@ -2,15 +2,17 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import { Upload, X } from "lucide-react"
 import { FormField } from "@/components/form-field"
 import { useState, useEffect } from "react"
 
 interface DataProfileCardProps {
   isVisible: boolean
+  onSave?: () => void
 }
 
-export function DataProfileCard({ isVisible }: DataProfileCardProps) {
+export function DataProfileCard({ isVisible, onSave }: DataProfileCardProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,18 +78,51 @@ export function DataProfileCard({ isVisible }: DataProfileCardProps) {
     }
     localStorage.setItem('resumebase-profile', JSON.stringify(profileData))
     console.log('Profile saved to localStorage:', profileData)
+    toast.success("profile saved")
+  }
+
+  const handleReset = () => {
+    setFormData({
+      // Personal Information
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      linkedin: "",
+      github: "",
+      website: "",
+      location: "",
+      willingToRelocate: "",
+      earliestStart: "",
+      availability: "",
+      
+      // Professional Information
+      currentTitle: "",
+      yearsOfExperience: "",
+      education: "",
+      skills: "",
+      coverLetter: "",
+      
+      // Application Preferences
+      salaryExpectation: "",
+      workAuthorization: "",
+      noticePeriod: "",
+    })
+    setSelectedFile(null)
+    localStorage.removeItem('resumebase-profile')
+    toast.success("profile reset")
   }
 
   return (
     <Card className={`h-full rounded-lg bg-white py-0 ${
       isVisible ? "border border-gray-200 shadow-lg" : ""
     }`}>
-      <CardContent className="p-4 py-6 overflow-y-auto">
-        <form className="space-y-6">
+      <CardContent className="p-4 pt-4 pb-6 overflow-y-auto">
+        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
           {/* Personal Information Section */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center justify-between mb-4">
             <h3 className="text-2xl font-semibold">profile</h3>
-            
+
             {/* Hidden PDF input */}
             <input
               type="file"
@@ -96,11 +131,12 @@ export function DataProfileCard({ isVisible }: DataProfileCardProps) {
               className="hidden"
               onChange={handleFileChange}
             />
-            
+
             <Button
               variant="outline"
               size="icon"
               className="flex-shrink-0 bg-transparent"
+              type="button"
               onClick={() => document.getElementById("profile-upload")?.click()}
             >
               <Upload className="h-4 w-4" />
@@ -112,7 +148,7 @@ export function DataProfileCard({ isVisible }: DataProfileCardProps) {
             <div className="flex flex-col gap-2 mb-4">
               <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-md w-fit">
                 <span>{selectedFile.name}</span>
-                <button onClick={removeFile} className="text-gray-500 hover:text-red-500">
+                <button type="button" onClick={removeFile} className="text-gray-500 hover:text-red-500">
                   <X className="h-3 w-3" />
                 </button>
               </div>
@@ -338,9 +374,12 @@ export function DataProfileCard({ isVisible }: DataProfileCardProps) {
             </div>
           </div>
 
-          {/* Save Button */}
-          <div className="pt-4 border-t border-gray-200">
-            <Button onClick={handleSave} className="w-full">
+          {/* Actions */}
+          <div className="pt-4 border-t border-gray-200 flex gap-2">
+            <Button type="button" variant="outline" onClick={handleReset} className="w-1/2">
+              reset
+            </Button>
+            <Button type="button" onClick={handleSave} className="w-1/2">
               save
             </Button>
           </div>

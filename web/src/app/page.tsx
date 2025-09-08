@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Paperclip, X, User } from "lucide-react"
 import { DataProfileCard } from "@/components/data-profile-card"
+import { ApplyCard } from "@/components/apply-card"
 
 interface SessionData {
   sessionId: string
@@ -147,7 +148,7 @@ export default function Home() {
 
       {/* Main content with dynamic width */}
       <div
-        className="transition-all duration-300 ease-in-out border border-gray-200 rounded-lg mt-2 mb-2 relative shadow-lg"
+        className="transition-all duration-300 ease-in-out border border-gray-200 rounded-lg mt-2 mb-2 relative shadow-lg bg-white"
         style={{
           height: "calc(100vh - 1rem)",
           marginLeft: "0.5rem",
@@ -169,59 +170,15 @@ export default function Home() {
         // Centered layout when no session
         <div className="h-full flex items-center justify-center p-4">
           <div className="w-full max-w-5xl space-y-4">
-            <Card className="shadow-lg">
-              <CardHeader className="pb-3">
-                <h1 className="text-2xl font-semibold">resumebase</h1>
-                <p className="text-muted-foreground text-sm">drop the link to the application here</p>
-              </CardHeader>
-            <CardContent className="pb-4">
-              <div className="flex gap-2">
-                <Input
-                  type="search"
-                  placeholder="Enter application URL..."
-                  className="w-full"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleApply()}
-                />
-
-                {/* Hidden PDF input */}
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  id="resume-upload"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-
-                {/* Paperclip opens file picker */}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="flex-shrink-0 bg-transparent"
-                  onClick={() => document.getElementById("resume-upload")?.click()}
-                >
-                  <Paperclip className="h-4 w-4" />
-                </Button>
-
-                <Button type="submit" className="px-6" onClick={handleApply} disabled={isLoading}>
-                  {isLoading ? "starting..." : "apply"}
-                </Button>
-              </div>
-
-              {/* File badge */}
-              {selectedFile && (
-                <div className="flex flex-col gap-2 mt-2">
-                  <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-md w-fit">
-                    <span>{selectedFile.name}</span>
-                    <button onClick={removeFile} className="text-gray-500 hover:text-red-500">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-            </Card>
+            <ApplyCard
+              inputValue={inputValue}
+              onInputChange={setInputValue}
+              onApply={handleApply}
+              isLoading={isLoading}
+              onFileChange={handleFileChange}
+              selectedFile={selectedFile}
+              onRemoveFile={removeFile}
+            />
           </div>
         </div>
       ) : (
@@ -229,63 +186,17 @@ export default function Home() {
         <div className="h-full flex flex-col items-center p-4 gap-4">
           {/* Application Card - Top (compact) */}
           <div className="w-full flex justify-center">
-            <Card className="w-full max-w-5xl shadow-lg flex-shrink-0">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white rounded-md p-1 shadow-sm border">
-                    <img src="/logo.png" alt="resumebase" className="h-8 w-auto" />
-                  </div>
-                </div>
-                <p className="text-muted-foreground text-sm">drop the link to the application here</p>
-              </CardHeader>
-              <CardContent className="pb-4">
-                <div className="flex gap-2">
-                  <Input
-                    type="search"
-                    placeholder="Enter application URL..."
-                    className="w-full"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleApply()}
-                  />
-
-                  {/* Hidden PDF input */}
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    id="resume-upload-session"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-
-                  {/* Paperclip opens file picker */}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="flex-shrink-0 bg-transparent"
-                    onClick={() => document.getElementById("resume-upload-session")?.click()}
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-
-                  <Button type="submit" className="px-6" onClick={handleApply} disabled={isLoading}>
-                    {isLoading ? "starting..." : "apply"}
-                  </Button>
-                </div>
-
-                {/* File badge */}
-                {selectedFile && (
-                  <div className="flex flex-col gap-2 mt-2">
-                    <div className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-1 rounded-md w-fit">
-                      <span>{selectedFile.name}</span>
-                      <button onClick={removeFile} className="text-gray-500 hover:text-red-500">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <div className="w-full max-w-5xl flex-shrink-0">
+              <ApplyCard
+                inputValue={inputValue}
+                onInputChange={setInputValue}
+                onApply={handleApply}
+                isLoading={isLoading}
+                onFileChange={handleFileChange}
+                selectedFile={selectedFile}
+                onRemoveFile={removeFile}
+              />
+            </div>
           </div>
 
           {/* Session Window - Below (takes remaining space) */}
