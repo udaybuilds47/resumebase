@@ -5,6 +5,9 @@ import crypto from "node:crypto";
 import { stagehandLogger } from "@/lib/logger";
 import { FileLogger } from "@/lib/fileLogger";
 
+// Store active sessions for stopping
+const activeSessions = new Map<string, { stagehand: Stagehand; fileLogger: FileLogger }>();
+
 const SYSTEM_PROMPT = [
   "",
   "SCOPE",
@@ -68,7 +71,49 @@ const SYSTEM_PROMPT = [
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { prompt?: string; jobUrl?: string; url?: string; resumeUrl?: string };
+    const body = (await request.json()) as { 
+      prompt?: string; 
+      jobUrl?: string; 
+      url?: string; 
+      resumeUrl?: string;
+      action?: string;
+      sessionId?: string;
+    };
+    
+    // Handle session stop action
+    if (body.action === "stop" && body.sessionId) {
+      try {
+        // Stop the stagehand agent if it's running
+        const activeSession = activeSessions.get(body.sessionId);
+        if (activeSession) {
+          try {
+            await activeSession.stagehand.close();
+            activeSession.fileLogger.log('info', '🛑 Session stopped by user');
+            activeSessions.delete(body.sessionId);
+          } catch (closeError) {
+            console.error("Error closing stagehand:", closeError);
+          }
+        }
+        
+        // Terminate the browserbase session
+        const bb = new Browserbase({ apiKey: process.env.BROWSERBASE_API_KEY! });
+        await bb.sessions.update(body.sessionId, {
+          status: "REQUEST_RELEASE",
+          projectId: process.env.BROWSERBASE_PROJECT_ID!,
+        });
+        
+        console.log(`Session ${body.sessionId} termination requested successfully`);
+        
+        return NextResponse.json({ success: true, message: "Session stopped successfully" });
+      } catch (error) {
+        console.error("Error stopping session:", error);
+        return NextResponse.json({ 
+          error: "Failed to stop session", 
+          details: error instanceof Error ? error.message : String(error) 
+        }, { status: 500 });
+      }
+    }
+    
     const promptFromBody = (body.prompt || "").trim();
     const jobUrl = (body.jobUrl || "").trim();
     const url = (body.url || "").trim();
@@ -185,6 +230,11 @@ ${JSON.stringify(DATA_PROFILE, null, 2)}
     // Initialize file logger for this session
     const fileLogger = new FileLogger(sessionId || 'unknown');
     fileLogger.log('info', '🚀 Session initialized', { sessionId, sessionUrl, debugUrl });
+    
+    // Store active session for potential stopping
+    if (sessionId) {
+      activeSessions.set(sessionId, { stagehand, fileLogger });
+    }
 
     let viewerUrl: string | null = sessionUrl ?? debugUrl ?? null;
     try {
@@ -282,15 +332,20 @@ ${JSON.stringify(DATA_PROFILE, null, 2)}
         });
       } catch {
         // swallow errors (no logging requested)
-      } finally {
-        try {
-          fileLogger.log('info', '🔚 Closing Stagehand session');
-          await stagehand.close();
-          fileLogger.log('info', '✅ Session closed successfully');
-        } catch (error) {
-          fileLogger.log('error', '❌ Error closing session', { error: error instanceof Error ? error.message : String(error) });
+        } finally {
+          try {
+            fileLogger.log('info', '🔚 Closing Stagehand session');
+            await stagehand.close();
+            fileLogger.log('info', '✅ Session closed successfully');
+            
+            // Remove from active sessions
+            if (sessionId) {
+              activeSessions.delete(sessionId);
+            }
+          } catch (error) {
+            fileLogger.log('error', '❌ Error closing session', { error: error instanceof Error ? error.message : String(error) });
+          }
         }
-      }
     });
 
     return response;
