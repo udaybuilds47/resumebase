@@ -155,6 +155,12 @@ export default function Home() {
           marginRight: showDataProfile ? "21rem" : "0.5rem", // 20rem (card) + 1rem (gap)
         }}
       >
+        {/* Top-left logo */}
+        <div className="absolute top-4 left-4 z-30">
+          <div className="bg-white rounded-md p-1 shadow-sm border">
+            <img src="/logo.png" alt="resumebase" className="h-8 w-auto" />
+          </div>
+        </div>
         {/* Profile Panel Button - Top Right */}
         <Button
           variant="outline"

@@ -31,11 +31,8 @@ export function ApplyCard({
   return (
     <Card className="shadow-lg">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
           <h1 className="text-2xl font-semibold">resumebase</h1>
-          <div className="bg-white rounded-md p-1 shadow-sm border">
-            <img src="/logo.png" alt="resumebase" className="h-8 w-auto" />
-          </div>
         </div>
         <p className="text-muted-foreground text-sm">drop the link to the application here</p>
       </CardHeader>
