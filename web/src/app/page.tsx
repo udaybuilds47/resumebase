@@ -231,7 +231,11 @@ export default function Home() {
           <div className="w-full flex justify-center">
             <Card className="w-full max-w-5xl shadow-lg flex-shrink-0">
               <CardHeader className="pb-3">
-                <h1 className="text-2xl font-semibold">resumebase</h1>
+                <div className="flex items-center gap-3">
+                  <div className="bg-white rounded-md p-1 shadow-sm border">
+                    <img src="/logo.png" alt="resumebase" className="h-8 w-auto" />
+                  </div>
+                </div>
                 <p className="text-muted-foreground text-sm">drop the link to the application here</p>
               </CardHeader>
               <CardContent className="pb-4">
