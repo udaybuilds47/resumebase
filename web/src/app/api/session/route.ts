@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
       jobUrl?: string; 
       url?: string; 
       resumeUrl?: string;
+      dataProfile?: unknown;
       action?: string;
       sessionId?: string;
     };
@@ -118,32 +119,10 @@ export async function POST(request: NextRequest) {
     const jobUrl = (body.jobUrl || "").trim();
     const url = (body.url || "").trim();
     const resumeUrl = (body.resumeUrl || "").trim();
+    const incomingProfile = body.dataProfile && typeof body.dataProfile === 'object' ? (body.dataProfile as Record<string, unknown>) : undefined;
 
-    // Provide a small, opinionated data profile so the agent knows defaults for tricky fields.
-    const DATA_PROFILE = {
-      person: {
-        firstName: "John",
-        lastName: "Doe",
-        preferredFirstName: "Johnny",
-        email: "john.doe@example.com",
-        phone: "123-456-7890",
-        website: "https://example.com",
-        github: "https://github.com/johndoe",
-        linkedin: "https://www.linkedin.com/in/johndoe",
-        locationPreferenceAnswer: "Yes",
-        earliestStart: "I am available to start immediately.",
-        deadlines: "No deadlines."
-      },
-      policy: {
-        visaSponsorshipNowOrFuture: "No",
-        requireVisaSponsorship: "No",
-        aiPolicyAcknowledgement: "Yes",
-        veteranStatus: "I don't wish to answer",
-        gender: "I don't wish to answer",
-        hispanicLatino: "I don't wish to answer",
-        disabilityStatus: "I don't wish to answer"
-      }
-    } as const;
+    // Only use the provided profile; do not merge with defaults
+    const EFFECTIVE_PROFILE = incomingProfile ?? {};
 
     // Build instruction from either prompt or a provided URL
     const instruction =
@@ -162,7 +141,7 @@ SUCCESS CRITERIA (do not stop early):
 - Only finish after you actually submit and see confirmation (e.g., confirmation page/text, tracking ID, or success banner). If submission fails, handle validation errors and retry.
 
 DATA_PROFILE:
-${JSON.stringify(DATA_PROFILE, null, 2)}
+${JSON.stringify(EFFECTIVE_PROFILE, null, 2)}
 `
         : url
         ? `Go to ${url} and fully complete the entire application/task to final submission.
@@ -176,7 +155,7 @@ SUCCESS CRITERIA (do not stop early):
 - Only finish after successful submission is clearly confirmed on the site. Handle validation errors and retry until submitted or steps exhausted.
 
 DATA_PROFILE:
-${JSON.stringify(DATA_PROFILE, null, 2)}
+${JSON.stringify(EFFECTIVE_PROFILE, null, 2)}
 `
         : "");
 
@@ -314,6 +293,7 @@ ${JSON.stringify(DATA_PROFILE, null, 2)}
           maxSteps: 900,
           autoScreenshot: true,
           waitBetweenActions: 900,
+          context: JSON.stringify({ DATA_PROFILE: EFFECTIVE_PROFILE }),
         });
         
         fileLogger.logStagehandReasoning('Agent execution completed', { 
