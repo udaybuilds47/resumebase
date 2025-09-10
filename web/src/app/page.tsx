@@ -148,11 +148,15 @@ export default function Home() {
 
       {/* Main content with dynamic width */}
       <div
-        className="transition-all duration-300 ease-in-out border border-gray-200 rounded-lg mt-2 mb-2 relative shadow-lg bg-white"
+        className="transition-all duration-300 ease-in-out border border-gray-200 rounded-lg mt-2 mb-2 relative shadow-lg"
         style={{
           height: "calc(100vh - 1rem)",
           marginLeft: "0.5rem",
           marginRight: showDataProfile ? "21rem" : "0.5rem", // 20rem (card) + 1rem (gap)
+          backgroundImage: 'url(/background.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         }}
       >
         {/* Top-left logo */}
@@ -165,7 +169,7 @@ export default function Home() {
         <Button
           variant="outline"
           size="icon"
-          className="absolute top-4 right-4 z-30 flex-shrink-0 bg-transparent"
+          className="absolute top-4 right-4 z-30 flex-shrink-0"
           onClick={() => setShowDataProfile(!showDataProfile)}
           title={showDataProfile ? "Hide Profile" : "Show Profile"}
         >
