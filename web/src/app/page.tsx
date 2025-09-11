@@ -111,7 +111,7 @@ export default function Home() {
         setSessionData({ sessionId: data.sessionId, viewerUrl: data.viewerUrl ?? null })
         toast.success(`resumebase session started! session id: ${data.sessionId}`)
 
-        setInputValue("") // Clear input after success
+        // Keep the input value so it persists after clicking Apply
       } else {
         console.error("Failed to start session:", data.error)
         toast.error(`failed to start session: ${data.error}`)
