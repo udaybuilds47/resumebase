@@ -123,24 +123,37 @@ export function DataProfileCard({ isVisible, onSave }: DataProfileCardProps) {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-2xl font-semibold">profile</h3>
 
-            {/* Hidden PDF input */}
-            <input
-              type="file"
-              accept="application/pdf"
-              id="profile-upload"
-              className="hidden"
-              onChange={handleFileChange}
-            />
+            <div className="flex items-center gap-2">
+              {/* Hidden PDF input */}
+              <input
+                type="file"
+                accept="application/pdf"
+                id="profile-upload"
+                className="hidden"
+                onChange={handleFileChange}
+              />
 
-            <Button
-              variant="outline"
-              size="icon"
-              className="flex-shrink-0 bg-transparent"
-              type="button"
-              onClick={() => document.getElementById("profile-upload")?.click()}
-            >
-              <Upload className="h-4 w-4" />
-            </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="flex-shrink-0 bg-transparent"
+                type="button"
+                onClick={() => document.getElementById("profile-upload")?.click()}
+                title="upload resume"
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className=" bg-transparent"
+                type="button"
+                title="gmail"
+              >
+                <img src="/gmail.png" alt="gmail" className="h-4 w-4 object-contain" />
+              </Button>
+            </div>
           </div>
           
           {/* File badge */}
