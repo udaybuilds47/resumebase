@@ -150,10 +150,6 @@ export function DataProfileCard({ isVisible, onSave }: DataProfileCardProps) {
                 className=" bg-transparent"
                 type="button"
                 title="gmail"
-                onClick={() => {
-                  const base = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
-                  window.location.href = `${base}/api/auth/gmail/connect`;
-                }}
               >
                 <img src="/gmail.png" alt="gmail" className="h-4 w-4 object-contain" />
               </Button>
