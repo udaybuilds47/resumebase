@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Browserbase } from "@browserbasehq/sdk";
-import { Stagehand } from "@browserbasehq/stagehand";
+import { Stagehand, connectToMCPServer } from "@browserbasehq/stagehand";
+import path from "node:path";
 import crypto from "node:crypto";
 import { stagehandLogger } from "@/lib/logger";
 import { FileLogger } from "@/lib/fileLogger";
@@ -116,6 +117,7 @@ export async function POST(request: NextRequest) {
     }
     
     const promptFromBody = (body.prompt || "").trim();
+    const userIdForOtp = (body as any).userId || "local";
     const jobUrl = (body.jobUrl || "").trim();
     const url = (body.url || "").trim();
     const resumeUrl = (body.resumeUrl || "").trim();
@@ -238,7 +240,30 @@ ${JSON.stringify(EFFECTIVE_PROFILE, null, 2)}
 
     queueMicrotask(async () => {
       try {
-        const operator = stagehand.agent();
+        // Connect MCP Gmail OTP server via local stdio
+        const mcpPath = path.resolve(process.cwd(), "..", "mcp", "dist", "index.js");
+        const gmailMcp = await connectToMCPServer({
+          command: "node",
+          args: [mcpPath],
+          env: {
+            GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
+            GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET!,
+            ENCRYPTION_KEY_BASE64: process.env.ENCRYPTION_KEY_BASE64!,
+            LABEL_NAME: process.env.LABEL_NAME || "ResumeBase/OTP",
+          },
+        });
+
+        const otpToolInstructions = [
+          "You have access to an MCP tool named get_email_otp.",
+          `When any site asks for an email one-time-passcode (OTP), call get_email_otp with { userId: "${userIdForOtp}", issuer: the site's brand/domain if known, maxAgeSec: 600 }.`,
+          "Retry up to 6 times with ~10s delay between attempts if no code is found.",
+          "After receiving the code, paste it into the OTP input and continue.",
+        ].join("\n");
+
+        const operator = stagehand.agent({
+          integrations: [gmailMcp],
+          instructions: otpToolInstructions,
+        });
 
         // If a resume URL is provided, pass it to Stagehand for natural form filling
         let resumeUrlForStagehand = resumeUrl;
