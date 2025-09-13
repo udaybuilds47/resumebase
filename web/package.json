@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@browserbasehq/sdk": "^2.6.0",
-    "@browserbasehq/stagehand": "file:../pack/browserbasehq-stagehand-2.5.0.tgz",
+    "@browserbasehq/stagehand": "file:../pack/browserbasehq-stagehand-2.4.4.tgz",
     "@google/genai": "^1.14.0",
     "@hookform/resolvers": "^5.2.1",
     "@radix-ui/react-checkbox": "^1.3.3",
