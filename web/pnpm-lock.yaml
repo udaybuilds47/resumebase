@@ -12,11 +12,11 @@ importers:
         specifier: ^2.6.0
         version: 2.6.0
       '@browserbasehq/stagehand':
-        specifier: file:../pack/browserbasehq-stagehand-2.4.4.tgz
-        version: file:../pack/browserbasehq-stagehand-2.4.4.tgz(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.76)
+        specifier: file:../pack/browserbasehq-stagehand-2.5.0.tgz
+        version: file:../pack/browserbasehq-stagehand-2.5.0.tgz(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.76)
       '@google/genai':
         specifier: ^1.14.0
-        version: 1.17.0(@modelcontextprotocol/sdk@1.17.5)
+        version: 1.17.0(@modelcontextprotocol/sdk@1.18.0)
       '@hookform/resolvers':
         specifier: ^5.2.1
         version: 5.2.1(react-hook-form@7.62.0(react@19.1.0))
@@ -228,9 +228,10 @@ packages:
   '@browserbasehq/sdk@2.6.0':
     resolution: {integrity: sha512-83iXP5D7xMm8Wyn66TUaUrgoByCmAJuoMoZQI3sGg3JAiMlTfnCIMqyVBoNSaItaPIkaCnrsj6LiusmXV2X9YA==}
 
-  '@browserbasehq/stagehand@file:../pack/browserbasehq-stagehand-2.4.4.tgz':
-    resolution: {integrity: sha512-7ALhm9HxWYzw8JVANVTwTDphUCer2QJjJEXdZo1MyWpEYhslyXP+vcLm+8QYkZPFKrflfSh5DtxE1+6S5LFYUA==, tarball: file:../pack/browserbasehq-stagehand-2.4.4.tgz}
-    version: 2.4.4
+  '@browserbasehq/stagehand@file:../pack/browserbasehq-stagehand-2.5.0.tgz':
+    resolution: {integrity: sha512-F1cpoR92PDpzkAg6lBaXgAtkqEotHAnk9SYsYNC0VI9mqmsqYc59M688czTo6ow1mrqPj6cRHTavILjwnv80og==, tarball: file:../pack/browserbasehq-stagehand-2.5.0.tgz}
+    version: 2.5.0
+    hasBin: true
     peerDependencies:
       deepmerge: ^4.3.1
       dotenv: ^16.4.5
@@ -474,8 +475,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.30':
     resolution: {integrity: sha512-GQ7Nw5G2lTu/BtHTKfXhKHok2WGetd4XYcVKGx00SjAk8GMwgJM3zr6zORiPGuOE+/vkc90KtTosSSvaCjKb2Q==}
 
-  '@modelcontextprotocol/sdk@1.17.5':
-    resolution: {integrity: sha512-QakrKIGniGuRVfWBdMsDea/dx1PNE739QJ7gCM41s9q+qaCYTHCdsIBXQVVXry3mfWAiaM9kT22Hyz53Uw8mfg==}
+  '@modelcontextprotocol/sdk@1.18.0':
+    resolution: {integrity: sha512-JvKyB6YwS3quM+88JPR0axeRgvdDu3Pv6mdZUy+w4qVkCzGgumb9bXG/TmtDRQv+671yaofVfXSQmFLlWU5qPQ==}
     engines: {node: '>=18'}
 
   '@napi-rs/wasm-runtime@0.2.12':
@@ -3256,12 +3257,12 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@browserbasehq/stagehand@file:../pack/browserbasehq-stagehand-2.4.4.tgz(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.76)':
+  '@browserbasehq/stagehand@file:../pack/browserbasehq-stagehand-2.5.0.tgz(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.76)':
     dependencies:
       '@anthropic-ai/sdk': 0.39.0
       '@browserbasehq/sdk': 2.6.0
       '@google/genai': 0.8.0
-      '@modelcontextprotocol/sdk': 1.17.5
+      '@modelcontextprotocol/sdk': 1.18.0
       ai: 4.3.19(react@19.1.0)(zod@3.25.76)
       deepmerge: 4.3.1
       devtools-protocol: 0.0.1464554
@@ -3381,12 +3382,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@google/genai@1.17.0(@modelcontextprotocol/sdk@1.17.5)':
+  '@google/genai@1.17.0(@modelcontextprotocol/sdk@1.18.0)':
     dependencies:
       google-auth-library: 9.15.1
       ws: 8.18.3
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.17.5
+      '@modelcontextprotocol/sdk': 1.18.0
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -3518,7 +3519,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@modelcontextprotocol/sdk@1.17.5':
+  '@modelcontextprotocol/sdk@1.18.0':
     dependencies:
       ajv: 6.12.6
       content-type: 1.0.5
