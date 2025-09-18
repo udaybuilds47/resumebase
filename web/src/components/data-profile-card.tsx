@@ -14,6 +14,7 @@ interface DataProfileCardProps {
 
 export function DataProfileCard({ isVisible, onSave }: DataProfileCardProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [gmailConnected, setGmailConnected] = useState<boolean>(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -68,6 +69,8 @@ export function DataProfileCard({ isVisible, onSave }: DataProfileCardProps) {
         console.error('Error loading profile from localStorage:', error)
       }
     }
+    // Check gmail connection
+    fetch('/api/oauth/gmail/status').then(r => r.json()).then(d => setGmailConnected(Boolean(d?.connected))).catch(() => {})
   }, [])
 
   const handleSave = () => {
@@ -150,8 +153,13 @@ export function DataProfileCard({ isVisible, onSave }: DataProfileCardProps) {
                 className=" bg-transparent"
                 type="button"
                 title="gmail"
+                onClick={() => {
+                  window.open('/api/oauth/gmail/start', '_blank', 'noopener')
+                  // recheck status after a short delay
+                  setTimeout(() => fetch('/api/oauth/gmail/status').then(r => r.json()).then(d => setGmailConnected(Boolean(d?.connected))).catch(() => {}), 2000)
+                }}
               >
-                <img src="/gmail.png" alt="gmail" className="h-4 w-4 object-contain" />
+                <img src="/gmail.png" alt="gmail" className={`h-4 w-4 object-contain ${gmailConnected ? 'opacity-100' : 'opacity-60'}`} />
               </Button>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { Stagehand } from "@browserbasehq/stagehand";
 import crypto from "node:crypto";
 import { stagehandLogger } from "@/lib/logger";
 import { FileLogger } from "@/lib/fileLogger";
+import { z } from "zod";
 
 // Store active sessions for stopping
 const activeSessions = new Map<string, { stagehand: Stagehand; fileLogger: FileLogger }>();
@@ -18,6 +19,7 @@ const SYSTEM_PROMPT = [
   "2) FIRST PASS FILL: For every inventoried field that has an obvious mapping from DATA_PROFILE or a safe placeholder, set its value. After typing/selecting, blur the field (press Tab or click away) to trigger validation. Then verify the control reflects the value (read input.value/checked/selected text).",
   "   - combobox: open list; select by visible text via getByRole('option', { name: /…/i }); then verify the combobox displays the chosen option.",
   "   - radio/checkbox: click option by label; then verify checked=true.",
+  "   - idempotence: if a control already displays the intended value (input.value equals target, checkbox/radio already checked, or selected label matches), skip changing it.",
   "   - file: attach the previously uploaded asset named 'resume' to the nearest file input to the 'Resume/CV' label; verify a filename chip appears; do not re-attach if a file is already listed.",
   "3) PRE-SUBMIT VERIFY: Iterate the checklist and ensure no field is empty (for textboxes/textareas: non-empty; for selects/comboboxes: a choice is selected; for radios/checkboxes: the intended option is checked). If a required text field has no DATA_PROFILE mapping, fill relevant answers. Fill any missed items before submitting. If either Resume or LinkedIn is acceptable, ensure at least one is present (prefer attaching resume).",
   "4) SUBMIT the primary 'Submit application'/'Submit'.",
@@ -123,6 +125,9 @@ export async function POST(request: NextRequest) {
 
     // Only use the provided profile; do not merge with defaults
     const EFFECTIVE_PROFILE = incomingProfile ?? {};
+
+    // Capture gmail refresh cookie (encrypted) from this request so server-side tool calls can auth
+    const gmailRtCookie = request.cookies.get('gmail_rt')?.value;
 
     // Build instruction from either prompt or a provided URL
     const instruction =
@@ -238,7 +243,40 @@ ${JSON.stringify(EFFECTIVE_PROFILE, null, 2)}
 
     queueMicrotask(async () => {
       try {
-        const operator = stagehand.agent();
+        const otpFetchSchema = z.object({
+          issuer: z.string().optional(),
+          windowMin: z.number().int().min(1).max(30).optional(),
+          noFrom: z.boolean().optional(),
+          timeoutSec: z.number().int().min(5).max(180).optional(),
+          keywords: z.string().optional(),
+        });
+
+        const operator = stagehand.agent({
+          tools: {
+            otpFetch: {
+              description: 'Fetch latest OTP code for the current site from connected mailbox',
+              parameters: otpFetchSchema,
+              execute: async (args: z.infer<typeof otpFetchSchema>) => {
+                try {
+                  const base = process.env.BASE_URL || 'http://localhost:3000';
+                  const params = new URLSearchParams();
+                  if (args.issuer) params.set('issuer', args.issuer);
+                  if (args.windowMin) params.set('windowMin', String(args.windowMin));
+                  if (args.noFrom) params.set('noFrom', '1');
+                  if (args.keywords) params.set('keywords', args.keywords);
+                  const url = `${base}/api/otp/fetch?${params.toString()}`;
+                  // Forward encrypted refresh token cookie value from the original request, if present
+                  const headers: Record<string, string> = {};
+                  if (gmailRtCookie) headers['x-gmail-rt'] = gmailRtCookie;
+                  const res = await fetch(url, { method: 'GET', headers });
+                  return await res.json(); // { code: string | null }
+                } catch (e: any) {
+                  return { code: null, error: e?.message || 'otp fetch error' } as any;
+                }
+              },
+            },
+          } as any,
+        });
 
         // If a resume URL is provided, pass it to Stagehand for natural form filling
         let resumeUrlForStagehand = resumeUrl;
