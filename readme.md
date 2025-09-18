@@ -47,7 +47,7 @@ prereqs: node 18+, pnpm, api keys for browserbase and a model provider.
 ```bash
 cd web
 pnpm install
-cp SETUP.md .env.local # open and fill values as needed
+cp env.example .env.local # open and fill values as needed
 pnpm dev
 # open http://localhost:3000
 ```
