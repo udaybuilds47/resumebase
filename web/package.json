@@ -1,7 +1,16 @@
 {
-  "name": "resumebase",
+  "name": "@resumebase/web",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/udaysavitha/resumebase.git"
+  },
+  "bugs": {
+    "url": "https://github.com/udaysavitha/resumebase/issues"
+  },
+  "homepage": "https://github.com/udaysavitha/resumebase#readme",
   "scripts": {
     "dev": "PINO_WORKER_THREADS=false PINO_WORKER_THREADS_ENABLED=false next dev --turbopack",
     "build": "PINO_WORKER_THREADS=false PINO_WORKER_THREADS_ENABLED=false next build",

@@ -4,17 +4,17 @@
 
 </div>
 
-## Overview
-- Next.js app that starts a Browserbase cloud browser and a Stagehand agent.
-- Agent uses Stagehand Open Operator (sequential tool calling) to act on a user‑provided URL.
-- API returns a live viewer URL so you can watch the session immediately while the agent continues in the background.
-- Recording events are exposed via API (no replay UI included here).
+## overview
+- next.js app that starts a browserbase cloud browser and a stagehand agent.
+- agent uses stagehand open operator (sequential tool calling) to act on a user‑provided url.
+- api returns a live viewer url so you can watch the session immediately while the agent continues in the background.
+- recording events are exposed via api (no replay ui included here).
 
-## Tech Stack
-- Next.js 15, React 19
-- Stagehand + Browserbase
+## tech stack
+- next.js 15, react 19
+- stagehand + browserbase
 
-## Directory
+## directory
 ```
 web/
 ├─ next.config.ts                    # Next server externals (pino, thread-stream)
@@ -26,74 +26,74 @@ web/
       └─ page.tsx                   # URL input, start, live viewer
 ```
 
-## End‑to‑End Flow
-1) User pastes a URL on the home page and clicks Apply.
-2) UI calls `POST /api/session` with `{ url }` (or `jobUrl`/`prompt`).
-3) API initializes Stagehand → Browserbase, then returns `{ runId, sessionId, viewerUrl }` immediately.
-4) UI embeds `viewerUrl` in an `<iframe>` so you can watch live.
-5) In the background, the agent runs `stagehand.agent().execute(...)` and the session is closed at the end.
-6) Recording can be fetched via `GET /api/session?sessionId=...` (consumer UI not included).
+## end‑to‑end flow
+1) user pastes a url on the home page and clicks apply.
+2) ui calls `post /api/session` with `{ url }` (or `jobUrl`/`prompt`).
+3) api initializes stagehand → browserbase, then returns `{ runId, sessionId, viewerUrl }` immediately.
+4) ui embeds `viewerurl` in an `<iframe>` so you can watch live.
+5) in the background, the agent runs `stagehand.agent().execute(...)` and the session is closed at the end.
+6) recording can be fetched via `get /api/session?sessionId=...` (consumer ui not included).
 
-## API
-### POST /api/session
-Request body (any one works):
+## api
+### post /api/session
+request body (any one works):
 ```json
 { "url": "https://example.com/apply" }
 { "jobUrl": "https://example.com/apply" }
 { "prompt": "Go to https://example.com/apply and complete the application" }
 ```
-Response:
+response:
 ```json
 { "runId": "uuid", "sessionId": "id", "viewerUrl": "https://..." }
 ```
-Behavior:
-- Starts Stagehand and returns immediately (non‑blocking via queueMicrotask).
-- Executes the agent with `maxSteps: 25` and `autoScreenshot: true`.
+behavior:
+- starts stagehand and returns immediately (non‑blocking via queuemicrotask).
+- executes the agent with `maxsteps: 25` and `autoscreenshot: true`.
 
-### GET /api/session?sessionId=...
-Response:
+### get /api/session?sessionid=...
+response:
 ```json
 { "events": [ /* rrweb events from Browserbase */ ] }
 ```
 
-## Configuration (env)
-Required:
+## configuration (env)
+required:
 - `BROWSERBASE_API_KEY`
 - `BROWSERBASE_PROJECT_ID`
-- One provider (choose Google or OpenAI):
-  - Google: `GOOGLE_API_KEY`, `GOOGLE_MODEL`
-  - OpenAI: `OPENAI_API_KEY`, `OPENAI_MODEL` (fallback default is `openai/gpt-4o-mini`)
-Optional:
+- one provider (choose google or openai):
+  - google: `GOOGLE_API_KEY`, `GOOGLE_MODEL`
+  - openai: `OPENAI_API_KEY`, `OPENAI_MODEL` (fallback default is `openai/gpt-4o-mini`)
+optional:
 - `ALLOWLIST` — comma‑separated domains to constrain navigation
 - `BROWSER_WIDTH` — browser viewport width (default: 1920)
 - `BROWSER_HEIGHT` — browser viewport height (default: 1080)
 
-## System Prompt (current)
-Applied in the API route for every step:
-- Only navigate within `ALLOWLIST` (or ask for an allowed domain if not set)
-- Ask for missing info before proceeding
-- Never bypass login/paywalls/CAPTCHA/MFA
-- Prefer visible text/role over brittle CSS selectors
-- When a task implies a list, return JSON only
-- Once complete, issue a `close` step and stop
+## system prompt (current)
+applied in the api route for every step:
+- only navigate within `ALLOWLIST` (or ask for an allowed domain if not set)
+- ask for missing info before proceeding
+- never bypass login/paywalls/captcha/mfa
+- prefer visible text/role over brittle css selectors
+- when a task implies a list, return json only
+- once complete, issue a `close` step and stop
 
-## Runtime Config
+## runtime config
 - `next.config.ts`: `serverExternalPackages: ['pino', 'thread-stream']`
 - `package.json` scripts prepend: `PINO_WORKER_THREADS=false PINO_WORKER_THREADS_ENABLED=false`
-  (avoids thread‑stream worker issues in Next’s server runtime)
+  (avoids thread‑stream worker issues in next’s server runtime)
 
-## UI Notes (`src/app/page.tsx`)
-- Sends `{ url }` to `POST /api/session`
-- Expects `{ runId, sessionId, viewerUrl }`
-- Renders `viewerUrl` in an `<iframe>` live viewer
-- A “Stop Session” button is present; server‑side stop is not implemented in the single‑route API (non‑blocking for current flow)
+## ui notes (`src/app/page.tsx`)
+- sends `{ url }` to `post /api/session`
+- expects `{ runId, sessionId, viewerUrl }`
+- renders `viewerurl` in an `<iframe>` live viewer
+- a “stop session” button is present; server‑side stop is not implemented in the single‑route api (non‑blocking for current flow)
 
-## Behavior & Limitations
-- Agent acts sequentially (think → act → observe). Long forms may require higher `maxSteps` and clearer instructions.
-- `autoScreenshot: true` improves visibility but adds latency.
-- No replay UI yet (only raw events endpoint).
+## behavior & limitations
+- agent acts sequentially (think → act → observe). long forms may require higher `maxsteps` and clearer instructions.
+- `autoscreenshot: true` improves visibility but adds latency.
+- no replay ui yet (only raw events endpoint).
 
-## Local Development
+## local development
 ```bash
 cd web
 npm install
@@ -101,5 +101,8 @@ npm run dev
 # open http://localhost:3000
 ```
 
-## Reference
-- Stagehand — Open Operator (sequential tool calling): https://docs.stagehand.dev/best-practices/build-agent#sequential-tool-calling-open-operator
+## reference
+- stagehand — open operator (sequential tool calling): https://docs.stagehand.dev/best-practices/build-agent#sequential-tool-calling-open-operator
+- project readme: ../README.md
+- contributing: ../CONTRIBUTING.md
+- code of conduct: ../CODE_OF_CONDUCT.md

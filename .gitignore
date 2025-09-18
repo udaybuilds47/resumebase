@@ -1,3 +1,27 @@
+# Node
+node_modules/
+.pnp.*
+
+# Env
+.env
+.env.*
+web/.env*
+
+# Logs
+*.log
+web/logs/
+
+# Next.js
+.next/
+out/
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
 # Dependencies
 node_modules/
 npm-debug.log*

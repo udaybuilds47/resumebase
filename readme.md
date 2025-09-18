@@ -1,181 +1,75 @@
-# ResumeBase
+<div align="center">
 
-A modern web application for automating web interactions and managing browser sessions using Browserbase and Google Gemini AI.
+# resumebase — open source job agent
 
-## 🎯 What is ResumeBase?
+</div>
 
-ResumeBase is a web automation platform that allows you to:
+i graduated last december. it took 6 months of grinding applications and endless rejections to land a role.
 
-- **Start Browser Sessions**: Launch automated browser sessions using Browserbase
-- **Web Automation**: Navigate to any URL and interact with web applications
-- **AI-Powered Interactions**: Use Google Gemini AI to enhance web automation
-- **Session Management**: Monitor and control browser sessions in real-time
-- **Debugging Tools**: Access browser debugging interfaces for development
+the market is brutal. the process is broken. it’s not just about jobs — it’s about survival. so i started building.
 
-The application provides a simple interface where you can input any web application URL, and it will automatically start a browser session, navigate to that URL, and provide you with debugging and viewing capabilities.
+- first, applymate: a chrome extension to personalize resumes.
+- now, resumebase: a job agent that reads the job, rewrites your resume, fills forms, and applies for you.
 
-## 🏗️ Project Structure
+right now it works: you drop a resume and a job link — it applies. it still needs job search, recommendations, custom resumes, verification. i’m open‑sourcing it so we can build it together.
 
+## what it does today
+- starts a cloud browser via browserbase and runs a stagehand agent
+- reads a job description, navigates, fills forms, and applies
+- streams a live viewer url so you can watch the session
+- exposes a raw recording events api
+
+## roadmap (help wanted)
+- job search and sourcing
+- recommendations and ranking
+- custom resume generation per job
+- verification and audit trail
+- replay ui and annotations
+- provider abstraction (openai, google, others)
+
+## project structure
 ```
 resumebase/
-├── web/                 # Next.js application with API routes
-│   ├── src/
-│   │   ├── app/        # App router pages and API routes
-│   │   ├── components/ # Reusable UI components
-│   │   └── lib/        # Utility functions and configurations
-│   ├── public/         # Static assets
-│   └── package.json    # Dependencies
-└── README.md           # This file
+├── web/                 # Next.js app (UI + API)
+│   ├── src/app/api/     # session, upload, oauth, otp endpoints
+│   ├── src/components/  # UI (shadcn/ui)
+│   └── src/lib/         # utils, logging, crypto
+├── .github/             # issues, PR template, CI
+├── LICENSE              # MIT
+└── README.md            # this file
 ```
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+ 
-- npm, yarn, or pnpm
-- Git
-- Browserbase API key and Project ID
-- Google Gemini API key
-
-### Getting Started
-
-1. Navigate to the web directory:
-   ```bash
-   cd web
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   # or
-   yarn install
-   # or
-   pnpm install
-   ```
-
-3. Set up environment variables:
-   Create a `.env.local` file in the `web` directory with:
-   ```env
-   BROWSERBASE_API_KEY=your_browserbase_api_key
-   BROWSERBASE_PROJECT_ID=your_browserbase_project_id
-   GOOGLE_API_KEY=your_google_gemini_api_key
-   GOOGLE_MODEL=gemini-1.5-flash
-   ```
-
-4. Run the development server:
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   # or
-   pnpm dev
-   ```
-
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## 🛠️ Tech Stack
-
-- **Next.js 15** - React framework with App Router and API routes
-- **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **shadcn/ui** - Modern UI components
-- **Browserbase SDK** - Web automation and browser session management
-- **Google Gemini AI** - AI-powered web interaction
-- **ESLint** - Code linting
-
-## 📁 Key Directories
-
-### `/web`
-- **`src/app/`** - Next.js App Router pages and API routes
-- **`src/app/api/`** - API endpoints for session management
-- **`src/components/`** - Reusable React components (shadcn/ui)
-- **`src/lib/`** - Utility functions and configurations
-- **`public/`** - Static assets (images, icons, etc.)
-
-## 🔧 Development
-
-### Available Scripts
+## quick start
+prereqs: node 18+, pnpm, api keys for browserbase and a model provider.
 
 ```bash
-npm run dev          # Start development server with Turbopack
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
+cd web
+pnpm install
+cp SETUP.md .env.local # open and fill values as needed
+pnpm dev
+# open http://localhost:3000
 ```
 
-### Code Style
-
-- Use TypeScript for type safety
-- Follow ESLint configuration
-- Use Prettier for code formatting
-- Follow Next.js and React best practices
-
-## 🌐 Environment Variables
-
-Create a `.env.local` file in the `web` directory:
-
+minimal `.env.local` for google genai:
 ```env
-BROWSERBASE_API_KEY=your_browserbase_api_key
-BROWSERBASE_PROJECT_ID=your_browserbase_project_id
-GOOGLE_API_KEY=your_google_gemini_api_key
+BROWSERBASE_API_KEY=...
+BROWSERBASE_PROJECT_ID=...
+GOOGLE_API_KEY=...
 GOOGLE_MODEL=gemini-1.5-flash
 ```
 
-### Required API Keys
+see `web/SETUP.md` for all options (openai supported too).
 
-- **Browserbase**: Get your API key and Project ID from [Browserbase](https://browserbase.com/)
-- **Google Gemini**: Get your API key from [Google AI Studio](https://aistudio.google.com/)
+## contributing
+- read CONTRIBUTING.md and CODE_OF_CONDUCT.md
+- good first issues: docs, replay ui, provider abstraction, form reliability
+- open a pr with a clear description and screenshots where relevant
 
-## 📦 Dependencies
+## security
+please report vulnerabilities via github security advisories. see SECURITY.md.
 
-- **Next.js 15** - React framework with App Router
-- **React 19** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS 4** - Styling framework
-- **shadcn/ui** - Modern UI components
-- **Browserbase SDK** - Web automation and browser management
-- **Google Gemini AI** - AI-powered interactions
-- **Zod** - Schema validation
-- **Sonner** - Toast notifications
+## license
+mit © 2025 uday savitha. see LICENSE.
 
-## 🚀 Deployment
-
-- Deploy to Vercel (recommended for Next.js)
-- Or deploy to any platform that supports Node.js applications
-- Ensure all environment variables are configured in your deployment platform
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-If you encounter any issues or have questions:
-
-1. Check the [Issues](https://github.com/yourusername/resumebase/issues) page
-2. Create a new issue with detailed information
-3. Contact the development team
-
-## 🔮 Roadmap
-
-- [ ] Enhanced session management
-- [ ] Multiple browser session support
-- [ ] Advanced web automation workflows
-- [ ] Session recording and playback
-- [ ] AI-powered web interaction analysis
-- [ ] Mobile-responsive design improvements
-- [ ] Real-time collaboration features
-- [ ] Advanced error handling and retry mechanisms
-
----
-
-**Happy coding! 🎉**
+## credits
+- browserbase, stagehand, shadcn/ui, next.js, tailwind
