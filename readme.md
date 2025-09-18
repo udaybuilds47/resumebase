@@ -73,3 +73,6 @@ mit © 2025 uday savitha. see LICENSE.
 
 ## credits
 - browserbase, stagehand, shadcn/ui, next.js, tailwind
+
+## notes
+this repo currently uses a slightly altered stagehand package. you can find the fork here: `https://github.com/udaysvc/stagehand/tree/changes`.

@@ -106,3 +106,4 @@ npm run dev
 - project readme: ../README.md
 - contributing: ../CONTRIBUTING.md
 - code of conduct: ../CODE_OF_CONDUCT.md
+ - stagehand fork used in this repo: https://github.com/udaysvc/stagehand/tree/changes
