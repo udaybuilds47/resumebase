@@ -1,6 +1,8 @@
 <div align="center">
 
 # resumebase — open source job agent
+## demo
+<img src="web/public/rb%20gif.gif" alt="resumebase demo" width="720" />
 
 </div>
 
